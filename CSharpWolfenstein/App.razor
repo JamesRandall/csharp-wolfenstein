@@ -1,0 +1,59 @@
+﻿@page "/"
+@using System.Runtime.CompilerServices
+@using CSharpWolfenstein.Engine
+
+<div class="container">
+    <div class="row">
+        <div class="canvas-container">
+            <SKCanvasView OnPaintSurface="OnPaintSurface" IgnorePixelScaling="true" EnableRenderLoop="true" />
+        </div>
+    </div>
+</div>
+
+
+@code {
+    // Worth noting that the renderer is about 50% slower when you use Web GL. My assumption is that you end up
+    // interop-ing more than it seems, another copy of the byte array for the surface would cause about the level of
+    // slowdown I saw. But 2D canvas is fine - after all, just a 2D game.
+    
+    const int WolfViewportZoom = 2;
+    const int WolfViewportWidth = 304 * WolfViewportZoom;
+    const int WolfViewportHeight = 152 * WolfViewportZoom;
+    
+    private readonly FpsCounter _fpsCounter = new FpsCounter();
+    private readonly Renderer _renderer = new Renderer(WolfViewportWidth, WolfViewportHeight);
+    private readonly SKBitmap _bitmap = new SKBitmap(WolfViewportWidth, WolfViewportHeight);
+    
+    protected void OnPaintSurface(SKPaintSurfaceEventArgs e)
+    {
+        // Their is a good article on the different ways to update pixel data here:
+        //  https://docs.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/graphics/skiasharp/bitmaps/pixel-bits
+        // Having tried them all maintaining and then setting the pixel byte array is the most performant for us.
+        
+        unsafe
+        {
+            fixed (uint* ptr = _renderer.UpdateFrameBuffer())
+            {
+                _bitmap.SetPixels((IntPtr)ptr);
+            }
+        }
+        
+        var canvas = e.Surface.Canvas;
+        canvas.Clear(SKColors.White);
+        canvas.DrawBitmap(_bitmap, new SKRect(0, 0, WolfViewportWidth*2, WolfViewportHeight*2));
+        var fps = _fpsCounter.GetCurrentFps();
+        using var paint = new SKPaint
+        {
+            IsAntialias = true,
+            StrokeWidth = 5f,
+            StrokeCap = SKStrokeCap.Round,
+            TextAlign = SKTextAlign.Center,
+            TextSize = 24,
+        };
+
+        var surfaceSize = e.Info.Size;
+        canvas.DrawText($"{fps:0.00}fps", surfaceSize.Width / 2, surfaceSize.Height - 10f, paint);
+    }
+    
+    
+}
