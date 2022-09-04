@@ -265,17 +265,16 @@ public class EnemyState : OneOfBase<
         public record Pain(EnemyState PreviousStateType);
     }
 
-    public static readonly EnemyState Standing = new EnemyState(new Type.Standing());
-    public static readonly EnemyState Ambushing = new EnemyState(new Type.Ambushing());
-    public static readonly EnemyState Attack = new EnemyState(new Type.Attack());
-    public static EnemyState Path(PathState pathState) => new EnemyState(new Type.Path(pathState));
-    public static readonly EnemyState Shoot = new EnemyState(new Type.Shoot());
+    public static readonly EnemyState Standing = new(new Type.Standing());
+    public static readonly EnemyState Ambushing = new(new Type.Ambushing());
+    public static readonly EnemyState Attack = new(new Type.Attack());
+    public static EnemyState Path(PathState pathState) => new(new Type.Path(pathState));
+    public static readonly EnemyState Shoot = new(new Type.Shoot());
     public static EnemyState Chase((int x, int y) targetMapPosition) =>
         new EnemyState(new Type.Chase(targetMapPosition));
-    public static readonly EnemyState Die = new EnemyState(new Type.Die());
-    public static readonly EnemyState Dead = new EnemyState(new Type.Dead());
-    public static EnemyState Pain(EnemyState previousStateType) =>
-        new EnemyState(new Type.Pain(previousStateType));
+    public static readonly EnemyState Die = new(new Type.Die());
+    public static readonly EnemyState Dead = new(new Type.Dead());
+    public static EnemyState Pain(EnemyState previousStateType) => new(new Type.Pain(previousStateType));
 }
 
 public record BasicGameObjectProperties(
