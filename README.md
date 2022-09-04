@@ -4,5 +4,5 @@ I thought it might be fun to convert my F# version of Wolfenstein 3D (code [here
 
 I'm blogging about it as I go along:
 
-https://www.jamesdrandall.com/posts/csharp_blazor_wolfenstein_part_1/
-https://www.jamesdrandall.com/posts/csharp_blazor_wolfenstein_part_2/
+* https://www.jamesdrandall.com/posts/csharp_blazor_wolfenstein_part_1/
+* https://www.jamesdrandall.com/posts/csharp_blazor_wolfenstein_part_2/
