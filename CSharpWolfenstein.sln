@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharpWolfenstein", "CSharpWolfenstein\CSharpWolfenstein.csproj", "{844AD288-A3A2-4A7B-B63F-52BE8B7E40E6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharpWolfenstein.Tests", "CSharpWolfenstein.Tests\CSharpWolfenstein.Tests.csproj", "{6BF4CBA3-EAF5-495C-9339-FD3B82496A73}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{844AD288-A3A2-4A7B-B63F-52BE8B7E40E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{844AD288-A3A2-4A7B-B63F-52BE8B7E40E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{844AD288-A3A2-4A7B-B63F-52BE8B7E40E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6BF4CBA3-EAF5-495C-9339-FD3B82496A73}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6BF4CBA3-EAF5-495C-9339-FD3B82496A73}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6BF4CBA3-EAF5-495C-9339-FD3B82496A73}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6BF4CBA3-EAF5-495C-9339-FD3B82496A73}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

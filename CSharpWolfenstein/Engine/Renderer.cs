@@ -18,10 +18,12 @@ public class Renderer
     public uint[,] UpdateFrameBuffer()
     {
         for (int row = 0; row < _height; row++)
+        {
             for (int col = 0; col < _width; col++)
             {
-                _buffer[row, col] = MakePixel((byte)col, 0, (byte)row, 0xFF);
+                _buffer[row, col] = MakePixel((byte) col, 0, (byte) row, 0xFF);
             }
+        }
         return _buffer;
     }
     

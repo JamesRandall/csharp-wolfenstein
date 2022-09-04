@@ -17,6 +17,7 @@
     // slowdown I saw. But 2D canvas is fine - after all, just a 2D game.
     
     const int WolfViewportZoom = 2;
+    const int CanvasZoom = 2;
     const int WolfViewportWidth = 304 * WolfViewportZoom;
     const int WolfViewportHeight = 152 * WolfViewportZoom;
     
@@ -30,6 +31,9 @@
         //  https://docs.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/graphics/skiasharp/bitmaps/pixel-bits
         // Having tried them all maintaining and then setting the pixel byte array is the most performant for us.
         
+        var canvas = e.Surface.Canvas;
+        canvas.Clear(SKColors.White);
+        
         unsafe
         {
             fixed (uint* ptr = _renderer.UpdateFrameBuffer())
@@ -37,10 +41,8 @@
                 _bitmap.SetPixels((IntPtr)ptr);
             }
         }
+        canvas.DrawBitmap(_bitmap, new SKRect(0, 0, WolfViewportWidth*CanvasZoom, WolfViewportHeight*CanvasZoom));
         
-        var canvas = e.Surface.Canvas;
-        canvas.Clear(SKColors.White);
-        canvas.DrawBitmap(_bitmap, new SKRect(0, 0, WolfViewportWidth*2, WolfViewportHeight*2));
         var fps = _fpsCounter.GetCurrentFps();
         using var paint = new SKPaint
         {
