@@ -1,5 +1,6 @@
 ﻿@page "/"
 @using System.Runtime.CompilerServices
+@using CSharpWolfenstein.Assets
 @using CSharpWolfenstein.Engine
 
 <div class="container">
@@ -10,7 +11,7 @@
     </div>
 </div>
 
-
+@inject HttpClient HttpClient;
 @code {
     // Worth noting that the renderer is about 50% slower when you use Web GL. My assumption is that you end up
     // interop-ing more than it seems, another copy of the byte array for the surface would cause about the level of
@@ -25,18 +26,26 @@
     private readonly Renderer _renderer = new Renderer(WolfViewportWidth, WolfViewportHeight);
     private readonly SKBitmap _bitmap = new SKBitmap(WolfViewportWidth, WolfViewportHeight);
     
+    // We'll tidy up initializaiton later when we have the loading screen in place
+    private AssetPack? _assetPack;
+    protected override async Task OnInitializedAsync()
+    {
+        _assetPack = await AssetPack.Load(HttpClient, CanvasZoom);
+        await base.OnInitializedAsync();
+    }
+
     protected void OnPaintSurface(SKPaintSurfaceEventArgs e)
     {
-        // Their is a good article on the different ways to update pixel data here:
-        //  https://docs.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/graphics/skiasharp/bitmaps/pixel-bits
-        // Having tried them all maintaining and then setting the pixel byte array is the most performant for us.
-        
+        if (_assetPack == null) return;
         var canvas = e.Surface.Canvas;
         canvas.Clear(SKColors.White);
         
         unsafe
         {
-            fixed (uint* ptr = _renderer.UpdateFrameBuffer())
+            // Their is a good article on the different ways to update pixel data here:
+            //  https://docs.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/graphics/skiasharp/bitmaps/pixel-bits
+            // Having tried them all maintaining and then setting the pixel byte array is the most performant for us.
+            fixed (uint* ptr = _renderer.UpdateFrameBuffer(_assetPack))
             {
                 _bitmap.SetPixels((IntPtr)ptr);
             }
@@ -54,8 +63,6 @@
         };
 
         var surfaceSize = e.Info.Size;
-        canvas.DrawText($"{fps:0.00}fps", surfaceSize.Width / 2, surfaceSize.Height - 10f, paint);
+        canvas.DrawText($"{fps:0.00}fps", surfaceSize.Width / 2f, surfaceSize.Height - 10f, paint);
     }
-    
-    
 }

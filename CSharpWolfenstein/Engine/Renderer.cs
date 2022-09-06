@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using CSharpWolfenstein.Assets;
 
 namespace CSharpWolfenstein.Engine;
 
@@ -14,16 +15,23 @@ public class Renderer
         _height = height;
         _buffer = new uint[height, width];
     }
-    
-    public uint[,] UpdateFrameBuffer()
+
+    private void RenderTexture(Texture texture, int x, int y)
     {
-        for (int row = 0; row < _height; row++)
+        Enumerable.Range(0, texture.Height).Iter(row =>
         {
-            for (int col = 0; col < _width; col++)
-            {
-                _buffer[row, col] = MakePixel((byte) col, 0, (byte) row, 0xFF);
-            }
-        }
+            var targetY = y + row;
+            Enumerable.Range(0, texture.Width).Iter(col =>
+                _buffer[targetY,x+col] = texture.Pixels[row,col]
+            );
+        });
+    }
+    
+    public uint[,] UpdateFrameBuffer(AssetPack assetPack)
+    {
+        RenderTexture(assetPack.Walls[0], 0, 0);
+        RenderTexture(assetPack.StatusBar.Grin, 70, 0);
+        RenderTexture(assetPack.Sprites[0], 140, 0);
         return _buffer;
     }
     

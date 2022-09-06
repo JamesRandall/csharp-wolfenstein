@@ -1,8 +1,8 @@
 using System.Numerics;
 
-namespace CSharpWolfenstein.Tests;
+namespace CSharpWolfenstein.Tests.Game;
 
-public class UnitTest1
+public class EnemyGameObjectTests
 {
     protected EnemyGameObject BasicGuard =>
         new EnemyGameObject(
