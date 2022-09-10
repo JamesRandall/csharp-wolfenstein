@@ -1,4 +1,5 @@
 using CSharpWolfenstein.Engine;
+using CSharpWolfenstein.Extensions;
 
 namespace CSharpWolfenstein.Assets;
 

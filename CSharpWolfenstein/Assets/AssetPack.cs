@@ -1,3 +1,4 @@
+using CSharpWolfenstein.Extensions;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 

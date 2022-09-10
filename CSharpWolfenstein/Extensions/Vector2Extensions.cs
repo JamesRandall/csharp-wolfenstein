@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace CSharpWolfenstein;
+namespace CSharpWolfenstein.Extensions;
 
 public static class Vector2Extensions
 {

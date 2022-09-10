@@ -1,4 +1,4 @@
-namespace CSharpWolfenstein;
+namespace CSharpWolfenstein.Extensions;
 
 public static class LinqExtensions
 {
