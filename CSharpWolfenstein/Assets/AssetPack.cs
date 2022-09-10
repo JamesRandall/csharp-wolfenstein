@@ -3,9 +3,15 @@ using SixLabors.ImageSharp.PixelFormats;
 
 namespace CSharpWolfenstein.Assets;
 
-public record AssetPack(StatusBarTextures StatusBar, Texture[] Sprites, Texture[] Walls, byte[] MapHeader, byte[] GameMaps)
+public record AssetPack(
+    StatusBarTextures StatusBar,
+    Texture[] Sprites,
+    Texture[] Walls,
+    IReadOnlyDictionary<WeaponType, PlayerWeapon> Weapons,
+    byte[] MapHeader,
+    byte[] GameMaps)
 {
-    public static async Task<AssetPack> Load(HttpClient httpClient, double scaleFactor)
+    public static async Task<AssetPack> Load(HttpClient httpClient, double scaleFactor, (double width, double height) viewportSize)
     {
         const bool isSharewareVersion = true;
         var extension = isSharewareVersion ? "WL1" : "WL6";
@@ -50,11 +56,60 @@ public record AssetPack(StatusBarTextures StatusBar, Texture[] Sprites, Texture[
         bool IsWallIncludes(int index) => !isSharewareVersion || index <= 55 || index >= 98;
         var sprites = await LoadPngsAsTexturesWithEmptyPadding(i => $"assets/sprites/SPR{i:D5}.png", IsSpriteIncluded, Enumerable.Range(0,436));
         var wallTextures = await LoadPngsAsTexturesWithEmptyPadding(i => $"assets/walls/WAL{i:D5}.png", IsWallIncludes, Enumerable.Range(0,106));
+        var knifeSprites = sprites[416..420];
+        var pistolSprites = new List<Texture>(sprites[421..425]);
+        pistolSprites.AddRange(sprites[422..424].Reverse());
+        var machineGunSprites = sprites[426..430];
+        var chainGunSprites = sprites[431..435];
+        var weaponScaleFactor = viewportSize.height / sprites[416].Height;
+        var knife = new PlayerWeapon(
+            Sprites: knifeSprites.Scale(weaponScaleFactor),
+            CurrentFrame:0,
+            Damage:25,
+            AutoRepeat:false,
+            RequiresAmmunition:false,
+            StatusBarImageIndex:0,
+            WeaponType.Knife
+        );
+        var pistol = new PlayerWeapon(
+            Sprites: pistolSprites.ToArray().Scale(weaponScaleFactor),
+            CurrentFrame:0,
+            Damage:25,
+            AutoRepeat:false,
+            RequiresAmmunition:false,
+            StatusBarImageIndex:0,
+            WeaponType.Knife
+        );
+        var machineGun = new PlayerWeapon(
+            Sprites: machineGunSprites.ToArray().Scale(weaponScaleFactor),
+            CurrentFrame:0,
+            Damage:25,
+            AutoRepeat:true,
+            RequiresAmmunition:false,
+            StatusBarImageIndex:2,
+            WeaponType.Knife
+        );
+        var chainGun = new PlayerWeapon(
+            Sprites: chainGunSprites.ToArray().Scale(weaponScaleFactor),
+            CurrentFrame:0,
+            Damage:25,
+            AutoRepeat:true,
+            RequiresAmmunition:false,
+            StatusBarImageIndex:3,
+            WeaponType.Knife
+        );
         return new AssetPack(
             MapHeader: await httpClient.GetByteArrayAsync(new Uri($"assets/MAPHEAD.{extension}", UriKind.Relative)),
             GameMaps: await httpClient.GetByteArrayAsync(new Uri($"assets/GAMEMAPS.{extension}", UriKind.Relative)),
             Sprites: sprites,
             Walls: wallTextures,
+            Weapons: new Dictionary<WeaponType, PlayerWeapon>()
+            {
+                {WeaponType.Knife, knife},
+                {WeaponType.Pistol, pistol},
+                {WeaponType.ChainGun,chainGun},
+                {WeaponType.MachineGun,machineGun}
+            },
             StatusBar: new StatusBarTextures(
                 Background: (await LoadPngAsTexture("assets/statusBar/background.png")).Scale(scaleFactor),
                 HealthFaces: new []

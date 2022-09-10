@@ -32,6 +32,7 @@ public class Renderer
         RenderTexture(assetPack.Walls[0], 0, 0);
         RenderTexture(assetPack.StatusBar.Grin, 70, 0);
         RenderTexture(assetPack.Sprites[0], 140, 0);
+        RenderTexture(assetPack.Weapons[WeaponType.Pistol].CurrentSprite, 0, 0);
         return _buffer;
     }
     

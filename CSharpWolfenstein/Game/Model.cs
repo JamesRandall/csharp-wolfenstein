@@ -14,6 +14,10 @@ public class Option<T> : OneOfBase<T, OneOf.Types.None>
     protected Option(OneOf<T, None> input) : base(input)
     {
     }
+
+    public static Option<T> Some(T item) => new(OneOf<T, None>.FromT0(item));
+
+    public static Option<T> None => new(OneOf<T, None>.FromT1(new None()));
 }
 
 
@@ -426,6 +430,21 @@ public record Player(
 )
 {
     public PlayerWeapon CurrentWeapon => Weapons[CurrentWeaponIndex];
+
+    public static Player NewPlayer(AssetPack assetPack)
+    {
+        return new Player(
+            Score: 0,
+            Lives: 3,
+            Health: 100,
+            Radius: 0.5,
+            CurrentWeaponIndex: 1,
+            Ammunition: 9,
+            Weapons: new List<PlayerWeapon>() { assetPack.Weapons[WeaponType.Knife], assetPack.Weapons[WeaponType.Pistol] },
+            CurrentFaceIndex:0,
+            TimeToFaceChangeMs:1500.0
+        );
+    }
 }
 
 public record Camera(
@@ -442,17 +461,6 @@ public record SpriteLayout(
     uint PixelPoolOffset
 );
 
-public record WolfensteinMap(
-    int Width,
-    int Height,
-    Cell[,] Map,
-    int[,] Areas,
-    int NumberOfAreas,
-    IReadOnlyCollection<AbstractGameObject> AbstractGameObjects,
-    Camera PlayerStartingPosition,
-    DoorState[] Doors
-);
-
 public record CompositeArea(int Area, HashSet<int> ConnectedTo);
 
 public enum PixelDissolverState { Forwards, Backwards, Transitioning, Stopped }
@@ -467,27 +475,6 @@ public record PixelDissolver(
 {
     public int TotalPixels => RemainingPixels.Count + DrawnPixels.Count;
     public bool IsComplete => DissolverState == PixelDissolverState.Backwards && DrawnPixels.Count == 0;
-}
-
-public record Game(
-    int Level,
-    Cell[,] Map,
-    int[,] Areas,
-    IReadOnlyCollection<CompositeArea> CompositeAreas,
-    IReadOnlyCollection<AbstractGameObject> GameObjects,
-    Player Player,
-    Camera Camera,
-    ControlState ControlState,
-    bool IsFiring,
-    Option<double> TimeToNextWeaponFrame,
-    IReadOnlyCollection<DoorState> Doors,
-    Option<OverlayAnimation> ViewportFilter,
-    Option<PixelDissolver> PixelDissolver,
-    Func<Game, Player, Game> ResetLevel
-)
-{
-    public (int x, int y) PlayerMapPosition => ((int) Camera.Position.X, (int) Camera.Position.Y);
-    public bool IsPlayerRunning => (ControlState & ControlState.Forward) == ControlState.Forward;
 }
 
 public record StatusBarGraphics(

@@ -2,6 +2,7 @@
 @using System.Runtime.CompilerServices
 @using CSharpWolfenstein.Assets
 @using CSharpWolfenstein.Engine
+@using CSharpWolfenstein.Game
 
 <div class="container">
     <div class="row">
@@ -28,15 +29,20 @@
     
     // We'll tidy up initializaiton later when we have the loading screen in place
     private AssetPack? _assetPack;
+    //private Level? _level;
+    private GameState? _game;
+    
     protected override async Task OnInitializedAsync()
     {
-        _assetPack = await AssetPack.Load(HttpClient, CanvasZoom);
+        _assetPack = await AssetPack.Load(HttpClient, CanvasZoom, (WolfViewportWidth,WolfViewportHeight));
         await base.OnInitializedAsync();
     }
 
     protected void OnPaintSurface(SKPaintSurfaceEventArgs e)
     {
         if (_assetPack == null) return;
+        // temporary - need to move into a scene / game loop 
+        if (_game == null) _game = GameState.NewGame(_assetPack, DifficultyLevel.IAmDeathIncarnate);
         var canvas = e.Surface.Canvas;
         canvas.Clear(SKColors.White);
         
