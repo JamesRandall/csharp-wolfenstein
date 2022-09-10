@@ -141,7 +141,7 @@ public enum Side
 
 public record WallRenderingResult(
     IReadOnlyCollection<double> ZIndexes,
-    Tuple<int, int> WallInFrontOfPlayer,
+    (int x, int y) WallInFrontOfPlayer,
     bool IsDoorInFrontOfPlayer,
     int DistanceToWallInFrontOfPlayer,
     // Going to see what its like using an option type in C#. null makes me nauseaus.
@@ -208,6 +208,8 @@ public record Wall((int x, int y) MapPosition, int NorthSouthTextureIndex, int E
     public bool IsExit =>
         NorthSouthTextureIndex == 40 || EastWestTextureIndex == 40 ||
         NorthSouthTextureIndex == 41 || EastWestTextureIndex == 41;
+
+    public int TextureIndex(Side side) => side == Side.NorthSouth ? NorthSouthTextureIndex : EastWestTextureIndex;
 }
 
 public record Door((int x, int y) MapPosition, int DoorIndex) : Cell(MapPosition);

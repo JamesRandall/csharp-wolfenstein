@@ -19,7 +19,7 @@
     // slowdown I saw. But 2D canvas is fine - after all, just a 2D game.
     
     const int WolfViewportZoom = 2;
-    const int CanvasZoom = 2;
+    const double CanvasZoom = 2.0;
     const int WolfViewportWidth = 304 * WolfViewportZoom;
     const int WolfViewportHeight = 152 * WolfViewportZoom;
     
@@ -38,25 +38,48 @@
         await base.OnInitializedAsync();
     }
 
+    private (float,float) GetViewportPosition(SKSizeI surfaceSize)
+    {
+        var left = surfaceSize.Width / 2.0 - WolfViewportWidth * CanvasZoom / 2.0;
+        var statusBarHeight = 35.0 * CanvasZoom;
+        var verticalSpacing = (surfaceSize.Height - statusBarHeight - WolfViewportHeight * CanvasZoom) / 3.0;
+        return ((float)left, (float)verticalSpacing);
+    }
+
     protected void OnPaintSurface(SKPaintSurfaceEventArgs e)
     {
         if (_assetPack == null) return;
         // temporary - need to move into a scene / game loop 
         if (_game == null) _game = GameState.NewGame(_assetPack, DifficultyLevel.IAmDeathIncarnate);
         var canvas = e.Surface.Canvas;
-        canvas.Clear(SKColors.White);
+        canvas.Clear(new SKColor(0x00,0x40,0x40));
         
         unsafe
         {
             // Their is a good article on the different ways to update pixel data here:
             //  https://docs.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/graphics/skiasharp/bitmaps/pixel-bits
             // Having tried them all maintaining and then setting the pixel byte array is the most performant for us.
-            fixed (uint* ptr = _renderer.UpdateFrameBuffer(_assetPack))
+            fixed (uint* ptr = _renderer.UpdateFrameBuffer(_assetPack, _game, (WolfViewportWidth,WolfViewportHeight)))
             {
                 _bitmap.SetPixels((IntPtr)ptr);
             }
         }
-        canvas.DrawBitmap(_bitmap, new SKRect(0, 0, WolfViewportWidth*CanvasZoom, WolfViewportHeight*CanvasZoom));
+
+        SKColor ceiling = new SKColor(0x39, 0x39, 0x39);
+        SKColor floor = new SKColor(0x73, 0x73, 0x73);
+        var (viewportLeft, viewportTop) = GetViewportPosition(e.Info.Size);
+        var zoomedWolfViewportWidth = (float)(WolfViewportWidth * CanvasZoom);
+        var zoomedWolfViewportHeight = (float)(WolfViewportHeight * CanvasZoom);
+        canvas.DrawRect(new SKRect(viewportLeft, viewportTop, viewportLeft + zoomedWolfViewportWidth, viewportTop + zoomedWolfViewportHeight), new SKPaint { Style = SKPaintStyle.Fill, Color = ceiling });
+        canvas.DrawRect(
+            new SKRect(
+                viewportLeft, 
+                viewportTop + zoomedWolfViewportHeight / 2.0f, 
+                viewportLeft + zoomedWolfViewportWidth, 
+                viewportTop + zoomedWolfViewportHeight
+            ),
+            new SKPaint { Style = SKPaintStyle.Fill, Color = floor });
+        canvas.DrawBitmap(_bitmap, new SKRect(viewportLeft, viewportTop, viewportLeft+zoomedWolfViewportWidth, viewportTop + zoomedWolfViewportHeight));
         
         var fps = _fpsCounter.GetCurrentFps();
         using var paint = new SKPaint

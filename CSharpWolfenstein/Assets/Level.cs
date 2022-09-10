@@ -271,15 +271,23 @@ namespace CSharpWolfenstein.Assets
             var (cells, doors) = ConstructMapLayout(plane0, plane1);
             PatchWallsSurroundingDoors(cells, doors);
 
+            // Before we return it we have to flip the direction of the x axis
+            var flippedCells = new Cell[mapSize, mapSize];
+            Enumerable.Range(0,mapSize).Iter(row =>
+                Enumerable.Range(0,mapSize).Iter(col => 
+                    flippedCells[row,mapSize-1-col] = cells[row,col]
+                )
+            );
+            
             return new Level(
                 Width: mapSize,
                 Height: mapSize,
-                Map: cells,
+                Map: flippedCells,
                 Areas: new int [0, 0],
                 NumberOfAreas: 0,
                 AbstractGameObjects: Array.Empty<AbstractGameObject>(),
                 PlayerStartingPosition: GetStartingPosition(plane1),
-                Doors: doors.ToArray());
+                Doors: doors.Select(x => x with { MapPosition = x.MapPosition.FlipHorizontal()}).ToArray());
         }
     }
 }

@@ -14,7 +14,7 @@ public record GameState(
     ControlState ControlState,
     bool IsFiring,
     Option<double> TimeToNextWeaponFrame,
-    IReadOnlyCollection<DoorState> Doors,
+    DoorState[] Doors,
     Option<OverlayAnimation> ViewportFilter,
     Option<PixelDissolver> PixelDissolver,
     Func<GameState, Player, GameState> ResetLevel
