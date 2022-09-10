@@ -2,15 +2,15 @@ using CSharpWolfenstein.Engine;
 
 namespace CSharpWolfenstein.Assets;
 
-public record Texture(uint[,] Pixels, int Width, int Height)
+public record Texture(uint[] Pixels, int Width, int Height)
 {
-    public Pixel Get(int x, int y) => Pixel.FromUint(Pixels[y, x]);
+    public Pixel Get(int x, int y) => Pixel.FromUint(Pixels[y * Width + x]);
 
     public Texture Scale(double scaleFactor)
     {
         var newWidth = (int)(Width * scaleFactor);
         var newHeight = (int) (Height * scaleFactor);
-        var pixels = new uint[newHeight, newWidth];
+        var pixels = new uint[newHeight * newWidth];
         Enumerable.Range(0, newHeight)
             .Iter(row =>
             {
@@ -18,7 +18,7 @@ public record Texture(uint[,] Pixels, int Width, int Height)
                 Enumerable.Range(0, newWidth).Iter(col =>
                     {
                         var srcCol = (int) (col / scaleFactor);
-                        pixels[row,col] = Pixels[srcRow, srcCol];
+                        pixels[row * newWidth + col] = Pixels[srcRow * Width + srcCol];
                     }
                 );
             });

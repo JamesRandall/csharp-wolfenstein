@@ -10,4 +10,9 @@ public record Pixel(byte Red, byte Green, byte Blue, byte Alpha)
             Alpha: (byte) (data >> 24)
         );
     public uint ToUint() => (uint)((Alpha << 24) | (Blue << 16) | (Green << 8) | Red);
+
+    public static bool IsTransparent(uint packedPixel)
+    {
+        return (packedPixel >> 24) < 0xFF;
+    }
 };

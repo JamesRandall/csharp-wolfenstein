@@ -20,10 +20,10 @@ public record AssetPack(
         {
             var png = await httpClient.GetByteArrayAsync(new Uri(path, UriKind.Relative));
             var image = Image.Load<Rgba32>(png);
-            var pixels = new uint[image.Height, image.Width];
+            var pixels = new uint[image.Height * image.Width];
             Enumerable.Range(0, image.Height).Iter(row =>
                 Enumerable.Range(0, image.Width).Iter(col =>
-                    pixels[row, col] = image[col, row].PackedValue
+                    pixels[row * image.Width + col] = image[col, row].PackedValue
                 )
             );
             
@@ -43,7 +43,7 @@ public record AssetPack(
                 .Select(textureIndex =>
                 {
                     if (!includeTexture(textureIndex))
-                        return Task.FromResult(new Texture(Pixels: new uint[0, 0], Width: 0, Height: 0));
+                        return Task.FromResult(new Texture(Pixels: new uint[0], Width: 0, Height: 0));
                     return LoadPngAsTexture(pathFactory(textureIndex));
                 })
                 .ToArrayAsync();
@@ -62,6 +62,8 @@ public record AssetPack(
         var machineGunSprites = sprites[426..430];
         var chainGunSprites = sprites[431..435];
         var weaponScaleFactor = viewportSize.height / sprites[416].Height;
+        // TODO: We need to clip the weapons based on transparency as they have a LOT of empty space that costs
+        // rendering cycles.
         var knife = new PlayerWeapon(
             Sprites: knifeSprites.Scale(weaponScaleFactor),
             CurrentFrame:0,
