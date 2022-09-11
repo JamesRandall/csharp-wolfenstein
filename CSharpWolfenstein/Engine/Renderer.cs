@@ -9,7 +9,7 @@ public class Renderer
 {
     private readonly int _width;
     private readonly int _height;
-    private readonly uint[] _buffer;
+    private uint[] _buffer;
     
     public Renderer(int width, int height)
     {
@@ -70,17 +70,15 @@ public class Renderer
     
     public uint[] UpdateFrameBuffer(AssetPack assetPack, GameState game, (int width, int height) viewportSize)
     {
+        _buffer = new uint[_height * _width];
+        
         //const int mapSize = 64;
         const double textureWidth = 64.0;
         const double textureHeight = 64.0;
-        //var ceilingColor = (new Pixel(0x39, 0x39, 0x39, 0xFF)).ToUint();
 
         bool ShouldContinueCast(RayCastResult result) =>
             !result.IsHit && result.MapHit.InMap();
 
-        //int startX = (_width - viewportSize.width) / 2;
-        
-        
         var initialWallRenderResult = new WallRenderingResult(
             ZIndexes: Array.Empty<double>(),
             WallInFrontOfPlayer: (-1, -1),
@@ -174,10 +172,6 @@ public class Renderer
             }
         }
 
-        //RenderTexture(assetPack.Walls[0], 0, 0);
-        //RenderTexture(assetPack.StatusBar.Grin, 70, 0);
-        //RenderTexture(assetPack.Sprites[0], 140, 0);
-        //RenderTexture(assetPack.Weapons[WeaponType.Pistol].CurrentSprite, 0, 0);
         return _buffer;
     }
     

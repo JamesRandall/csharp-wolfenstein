@@ -1,13 +1,13 @@
 namespace CSharpWolfenstein.Engine;
 
-public class FpsCounter
+public class FrameTimer
 {
     private int _tickIndex = 0;
     private long _tickSum = 0;
     private readonly long[] _tickList = new long[100];
     private long _lastTick = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
     
-    public double GetCurrentFps()
+    public (double delta, double fps) GetCurrentTimings()
     {
         var newTick = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var delta = newTick - _lastTick;
@@ -20,6 +20,6 @@ public class FpsCounter
         if (++_tickIndex == _tickList.Length)
             _tickIndex = 0;
 
-        return 1000.0 / ((double)_tickSum / _tickList.Length);
+        return (delta,1000.0 / ((double)_tickSum / _tickList.Length));
     }
 }

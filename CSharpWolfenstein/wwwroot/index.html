@@ -9,6 +9,16 @@
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
     <link href="css/app.css" rel="stylesheet" />
     <link href="CSharpWolfenstein.styles.css" rel="stylesheet" />
+    <script>
+        window.configureGameEvents = (dotNetHelper,_) => {
+            document.addEventListener("keydown", event => {
+                if (!event.repeat)  dotNetHelper.invokeMethodAsync('OnKeyDown', event.key);
+            });
+            document.addEventListener("keyup", event => {
+                if (!event.repeat) dotNetHelper.invokeMethodAsync('OnKeyUp', event.key);
+            });
+        };
+    </script>
 </head>
 
 <body>
