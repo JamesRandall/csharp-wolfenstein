@@ -1,25 +1,11 @@
-using System.ComponentModel;
 using CSharpWolfenstein.Extensions;
 using CSharpWolfenstein.Game;
 
-namespace CSharpWolfenstein.Engine;
+namespace CSharpWolfenstein.Engine.RayCasting;
 
-public record RayCastParameters(
-    bool IncludeTurningPoints,
-    (double x, double y) From,
-    (double x, double y) Direction
-);
-
-public record RayCastResult(
-    bool IsHit,
-    (double x, double y) DeltaDistance,
-    (double x, double y) TotalDistance,
-    (int x, int y) MapHit,
-    Side Side);
-
-public static class Ray
+public class RayCaster : AbstractRayCaster
 {
-    public static RayCastResult Cast(RayCastParameters parameters, Func<RayCastResult, bool> shouldContinueFunc, GameState game)
+    public override RayCastResult Cast(RayCastParameters parameters, Func<RayCastResult, bool> shouldContinueFunc, GameState game)
     {
         var (initialMapX, initialMapY) = parameters.From.ToMap();
         var deltaDistX = parameters.Direction.x == 0.0 ? double.MaxValue : Math.Abs(1.0 / parameters.Direction.x);
@@ -45,6 +31,7 @@ public static class Ray
         
         // TODO: the use of raycastresult like this is a dogs dinner at the moment but will get things going for now
         var result = new RayCastResult(
+            IsComplete: false,
             IsHit: false,
             DeltaDistance: (deltaDistX, deltaDistY),
             TotalDistance: (initialSideDistX, initialSideDistY),
@@ -73,6 +60,7 @@ public static class Ray
                 _ => false
             };
             result = new RayCastResult(
+                IsComplete: false,
                 IsHit: newIsHit,
                 DeltaDistance: (deltaDistX, deltaDistY),
                 TotalDistance: (newSideDistX, newSideDistY),
@@ -81,7 +69,7 @@ public static class Ray
             );
         }
 
-        return result;
+        return result with { IsComplete = true };
     }
 
     private static bool IsDoorHit(

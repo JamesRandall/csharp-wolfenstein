@@ -404,19 +404,19 @@ public record PlayerWeapon(
 [Flags]
 public enum ControlState
 {
-    None          = 0b000000000000,
-    Forward       = 0b000000000001,
-    TurningLeft   = 0b000000000010,
-    TurningRight  = 0b000000000100,
-    StrafingLeft  = 0b000000001000,
-    StrafingRight = 0b000000010000,
-    Backward      = 0b000000100000,
-    Fire          = 0b000001000000,
-    Action        = 0b000010000000,
-    Weapon0       = 0b000100000000,
-    Weapon1       = 0b001000000000,
-    Weapon2       = 0b010000000000,
-    Weapon3       = 0b100000000000
+    None          = 0b0000000000000,
+    Forward       = 0b0000000000001,
+    TurningLeft   = 0b0000000000010,
+    TurningRight  = 0b0000000000100,
+    StrafingLeft  = 0b0000000001000,
+    StrafingRight = 0b0000000010000,
+    Backward      = 0b0000000100000,
+    Fire          = 0b0000001000000,
+    Action        = 0b0000010000000,
+    Weapon0       = 0b0000100000000,
+    Weapon1       = 0b0001000000000,
+    Weapon2       = 0b0010000000000,
+    Weapon3       = 0b0100000000000
 }
 
 public record Player(

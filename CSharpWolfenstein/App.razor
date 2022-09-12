@@ -1,6 +1,7 @@
 ﻿@page "/"
 @using CSharpWolfenstein.Assets
 @using CSharpWolfenstein.Engine
+@using CSharpWolfenstein.Engine.RayCasting
 @using CSharpWolfenstein.Game
 <div class="container" tabindex="0">
     <div class="row">
@@ -18,36 +19,17 @@
     // interop-ing more than it seems, another copy of the byte array for the surface would cause about the level of
     // slowdown I saw. But 2D canvas is fine - after all, just a 2D game.
     
-    const int WolfViewportZoom = 2;
-    const double CanvasZoom = 2.0;
-    const int WolfViewportWidth = 304 * WolfViewportZoom;
-    const int WolfViewportHeight = 152 * WolfViewportZoom;
-    
-    private readonly FrameTimer _frameTimer = new FrameTimer();
-    private readonly Renderer _renderer = new Renderer(WolfViewportWidth, WolfViewportHeight);
-    private readonly SKBitmap _bitmap = new SKBitmap(WolfViewportWidth, WolfViewportHeight);
-    
-    private string? _result;
     private DotNetObjectReference<App>? _objRef;
-    
-    // We'll tidy up initializaiton later when we have the loading screen in place
-    private AssetPack? _assetPack;
-    private GameState? _game;
-    
+    private AbstractGameEngine? _gameEngine;
+
     protected override async Task OnInitializedAsync()
     {
-        _assetPack = await AssetPack.Load(HttpClient, CanvasZoom, (WolfViewportWidth,WolfViewportHeight));
+        var assetPack = await AssetPack.Load(HttpClient, Constants.CanvasZoom, (Constants.WolfViewportWidth,Constants.WolfViewportHeight));
+        var game = GameState.NewGame(assetPack, DifficultyLevel.IAmDeathIncarnate);
+        _gameEngine = new GameEngine(assetPack, game, new(WallRenderer.RenderWalls, new RayCaster()));
         await base.OnInitializedAsync();
     }
 
-    private (float,float) GetViewportPosition(SKSizeI surfaceSize)
-    {
-        var left = surfaceSize.Width / 2.0 - WolfViewportWidth * CanvasZoom / 2.0;
-        var statusBarHeight = 35.0 * CanvasZoom;
-        var verticalSpacing = (surfaceSize.Height - statusBarHeight - WolfViewportHeight * CanvasZoom) / 3.0;
-        return ((float)left, (float)verticalSpacing);
-    }
-    
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -70,21 +52,30 @@
     [JSInvokable]
     public void OnKeyDown(string value)
     {
-        var controlState = ControlStateFromKey(value);
-        if (controlState != ControlState.None && _game != null)
+        if (_gameEngine == null) return;
+        System.Console.WriteLine(value);
+        if (value.ToLower() == "t")
         {
-            _game = _game with { ControlState = _game.ControlState ^ controlState };
+            _gameEngine = _gameEngine switch
+            {
+                GameEngine ge => new RayCastDemonstrationEngine(ge, new(WallRenderer.RenderWalls, new StepRayCaster())),
+                RayCastDemonstrationEngine re => new GameEngine(re, new(WallRenderer.RenderWalls, new RayCaster())),
+                _ => throw new GameEngineNotRecognizedException()
+            };
+        }
+        else
+        {
+            var controlState = ControlStateFromKey(value);
+            _gameEngine.OnKeyDown(controlState);
         }
     }
 
     [JSInvokable]
     public void OnKeyUp(string value)
     {
+        if (_gameEngine == null) return;
         var controlState = ControlStateFromKey(value);
-        if (controlState != ControlState.None && _game != null)
-        {
-            _game = _game with { ControlState = _game.ControlState ^ controlState };
-        }
+        _gameEngine.OnKeyUp(controlState);
     }
     
     public void Dispose()
@@ -94,52 +85,7 @@
 
     protected void OnPaintSurface(SKPaintSurfaceEventArgs e)
     {
-        if (_assetPack == null) return;
-        // temporary - need to move into a scene / game loop 
-        if (_game == null) _game = GameState.NewGame(_assetPack, DifficultyLevel.IAmDeathIncarnate);
-        var (delta,fps) = _frameTimer.GetCurrentTimings();
-        var canvas = e.Surface.Canvas;
-        canvas.Clear(new SKColor(0x00,0x40,0x40));
-        unsafe
-        {
-            // Their is a good article on the different ways to update pixel data here:
-            //  https://docs.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/graphics/skiasharp/bitmaps/pixel-bits
-            // Having tried them all maintaining and then setting the pixel byte array is the most performant for us.
-            fixed (uint* ptr = _renderer.UpdateFrameBuffer(_assetPack, _game, (WolfViewportWidth,WolfViewportHeight)))
-            {
-                _bitmap.SetPixels((IntPtr)ptr);
-            }
-        }
-
-        SKColor ceiling = new SKColor(0x39, 0x39, 0x39);
-        SKColor floor = new SKColor(0x73, 0x73, 0x73);
-        var (viewportLeft, viewportTop) = GetViewportPosition(e.Info.Size);
-        var zoomedWolfViewportWidth = (float)(WolfViewportWidth * CanvasZoom);
-        var zoomedWolfViewportHeight = (float)(WolfViewportHeight * CanvasZoom);
-        canvas.DrawRect(new SKRect(viewportLeft, viewportTop, viewportLeft + zoomedWolfViewportWidth, viewportTop + zoomedWolfViewportHeight), new SKPaint { Style = SKPaintStyle.Fill, Color = ceiling });
-        canvas.DrawRect(
-            new SKRect(
-                viewportLeft, 
-                viewportTop + zoomedWolfViewportHeight / 2.0f, 
-                viewportLeft + zoomedWolfViewportWidth, 
-                viewportTop + zoomedWolfViewportHeight
-            ),
-            new SKPaint { Style = SKPaintStyle.Fill, Color = floor });
-        canvas.DrawBitmap(_bitmap, new SKRect(viewportLeft, viewportTop, viewportLeft+zoomedWolfViewportWidth, viewportTop + zoomedWolfViewportHeight));
-        
-        
-        using var paint = new SKPaint
-        {
-            IsAntialias = true,
-            StrokeWidth = 5f,
-            StrokeCap = SKStrokeCap.Round,
-            TextAlign = SKTextAlign.Center,
-            TextSize = 24,
-        };
-
-        var surfaceSize = e.Info.Size;
-        canvas.DrawText($"{fps:0.00}fps", surfaceSize.Width / 2f, surfaceSize.Height - 10f, paint);
-
-        _game = _game.Update(delta);
+        if (_gameEngine == null) return;
+        _gameEngine.NewFrame(e);
     }
 }

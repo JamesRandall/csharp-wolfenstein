@@ -31,7 +31,6 @@ namespace CSharpWolfenstein.Engine
     {
         public static GameState Update(this GameState game, double delta)
         {
-            System.Console.WriteLine(delta);
             var frameMultiplier = delta / 1000.0;
             var movementSpeed = 6.0 * frameMultiplier;
             var rotationSpeed = 4.0 * frameMultiplier;
