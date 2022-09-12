@@ -6,13 +6,10 @@ namespace CSharpWolfenstein.Engine.RayCasting;
 public class StepRayCaster : AbstractRayCaster
 {
     private RayCastResult? _result;
-
-    private bool _canStep = true;
-
+    
     public void Stop()
     {
         _result = null;
-        _canStep = true;
     }
     
     public void Start(RayCastParameters parameters)
@@ -40,15 +37,11 @@ public class StepRayCaster : AbstractRayCaster
 
     public RayCastResult? Result => _result;
 
-    public void Tick()
-    {
-        _canStep = true;
-    }
     
     public override RayCastResult Cast(RayCastParameters parameters, Func<RayCastResult, bool> shouldContinueFunc, GameState game)
     {
         if (_result == null) Start(parameters);
-        if (!_canStep) return _result!;
+        //if (!_canStep) return _result!;
         
         var (initialMapX, initialMapY) = parameters.From.ToMap();
         
