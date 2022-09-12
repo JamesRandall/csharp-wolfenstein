@@ -55,7 +55,6 @@ public class RayCastDemonstrationEngine : AbstractGameEngine
         {
             // we only advance the ray caster on a timed basis
             _timeUntilNextStep += _speed;
-            //rayCaster.Tick();
 
             unsafe
             {
@@ -113,12 +112,12 @@ public class RayCastDemonstrationEngine : AbstractGameEngine
     {
         if (controlState == ControlState.Forward)
         {
-            _speed = _speed - 100.0;
-            if (_speed <= 10.0) _speed = 10.0;
+            _speed -= 50.0;
+            if (_speed <= 0.0) _speed = 0.0;
         }
         else if (controlState == ControlState.Backward)
         {
-            _speed = _speed + 100.0;
+            _speed += 50.0;
         }
     }
 }
