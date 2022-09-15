@@ -1,3 +1,4 @@
+using System.Numerics;
 using CSharpWolfenstein.Game;
 
 namespace CSharpWolfenstein.Engine
@@ -49,12 +50,36 @@ namespace CSharpWolfenstein.Engine
                 };
                 return input with { Camera = input.Camera with { Position = newPosition}};
             }
+
+            GameState Rotate(GameState input, double rotationMultiplier)
+            {
+                var planeX = input.Camera.Plane.X;
+                var planeY = input.Camera.Plane.Y;
+                var newDirX = dirX * Math.Cos(rotationMultiplier * rotationSpeed) -
+                              dirY * Math.Sin(rotationMultiplier * rotationSpeed);
+                var newDirY = dirX * Math.Sin(rotationMultiplier * rotationSpeed) +
+                              dirY * Math.Cos(rotationMultiplier * rotationSpeed);
+                var newPlaneX = planeX * Math.Cos(rotationMultiplier * rotationSpeed) -
+                                planeY * Math.Sin(rotationMultiplier * rotationSpeed);
+                var newPlaneY = planeX * Math.Sin(rotationMultiplier * rotationSpeed) +
+                                planeY * Math.Cos(rotationMultiplier * rotationSpeed);
+                return input with
+                {
+                    Camera = input.Camera with
+                    {
+                        Direction = new Vector2((float)newDirX, (float)newDirY),
+                        Plane = new Vector2((float)newPlaneX, (float)newPlaneY)
+                    }
+                };
+            }
             
             return
                 new List<Func<GameState, double, GameState>>
                 {
                     (g,d) => g.KeyPressed(ControlState.Forward) ? Move(g, movementSpeed) : g,
-                    (g, d) => g.KeyPressed(ControlState.Backward) ? Move(game, -movementSpeed / 2.0) : g
+                    (g, d) => g.KeyPressed(ControlState.Backward) ? Move(game, -movementSpeed / 2.0) : g,
+                    (g, d) => g.KeyPressed(ControlState.TurningLeft) ? Rotate(game, 1.0) : g,
+                    (g, d) => g.KeyPressed(ControlState.TurningRight) ? Rotate(game, -1.0) : g
                 }.Update(game, delta);
         }
     }

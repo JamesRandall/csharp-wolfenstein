@@ -12,7 +12,7 @@ public record RayCastResult(
     bool IsComplete, // TODO: need to revist this, put in place to allow the wall drawing to essentially be async
     bool IsHit,
     (double x, double y) DeltaDistance,
-    (double x, double y) TotalDistance,
+    (double x, double y) TotalSideDistance,
     (int x, int y) MapHit,
     Side Side);
 
@@ -32,7 +32,7 @@ public abstract class AbstractRayCaster
         const double tolerance = 0.0001;
         var (posX, posY) = parameters.From;
         var mapX2 = posX < newMap.x ? newMap.x - 1 : newMap.x;
-        var mapY2 = posY < newMap.y ? newMap.x + 1 : newMap.y;
+        var mapY2 = posY > newMap.y ? newMap.y + 1 : newMap.y;
         var adjacent = newSide == Side.EastWest ? (double) mapY2 - posY : (double) mapX2 - posX + 1.0;
         var rayMultiplier = newSide == Side.EastWest
             ? adjacent / parameters.Direction.y
@@ -46,6 +46,7 @@ public abstract class AbstractRayCaster
         {
             var trueYStep = Math.Sqrt(trueDeltaX * trueDeltaX - 1.0);
             var halfStepInY = rayPositionY + (stepDelta.y * trueYStep) / 2.0;
+            //return halfStepInY == newMap.y && (halfStepInY - newMap.y) < (1.0 - door.Offset / 64.0);
             return (Math.Abs(Math.Floor(halfStepInY) - newMap.y) < tolerance) && (halfStepInY - newMap.y) < (1.0 - door.Offset / 64.0);
         }
         // Side.EastWest

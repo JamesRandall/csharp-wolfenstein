@@ -12,6 +12,7 @@ public static class Vector2Extensions
     
     public static (int x, int y) ToMap(this Vector2 v) => ((int) v.X, (int) v.Y);
     
+    public static Vector2 FlipHorizontal(this Vector2 v) => v with {X = MapSize - 1 - v.X};
     public static (int x, int y) FlipHorizontal(this (int x, int y) v) => (MapSize - 1 - v.x, v.y);
 
     public static bool InMap(this (int x, int y) v) =>

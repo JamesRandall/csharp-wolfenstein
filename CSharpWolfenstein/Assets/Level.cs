@@ -282,7 +282,7 @@ namespace CSharpWolfenstein.Assets
             return new Level(
                 Width: mapSize,
                 Height: mapSize,
-                Map: flippedCells,
+                Map: cells.FlipHorizontal(),
                 Areas: new int [0, 0],
                 NumberOfAreas: 0,
                 AbstractGameObjects: Array.Empty<AbstractGameObject>(),

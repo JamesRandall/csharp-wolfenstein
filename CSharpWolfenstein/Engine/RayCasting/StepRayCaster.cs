@@ -1,11 +1,21 @@
+using System.Collections.Immutable;
 using CSharpWolfenstein.Extensions;
 using CSharpWolfenstein.Game;
 
 namespace CSharpWolfenstein.Engine.RayCasting;
 
+public record TrackingRayCastResult(
+    bool IsComplete,
+    bool IsHit, (double x, double y) DeltaDistance,
+    (double x, double y) TotalSideDistance,
+    (int x, int y) MapHit,
+    Side Side,
+    ImmutableArray<(double x, double y)> Steps) : RayCastResult(IsComplete, IsHit, DeltaDistance, TotalSideDistance, MapHit,
+    Side);
+
 public class StepRayCaster : AbstractRayCaster
 {
-    private RayCastResult? _result;
+    private TrackingRayCastResult? _result;
     
     public void Stop()
     {
@@ -16,7 +26,9 @@ public class StepRayCaster : AbstractRayCaster
     {
         var (initialMapX, initialMapY) = parameters.From.ToMap();
         var deltaDistX = parameters.Direction.x == 0.0 ? double.MaxValue : Math.Abs(1.0 / parameters.Direction.x);
+        //var deltaDistX = Math.Sqrt(1 + parameters.Direction.y * parameters.Direction.y / (parameters.Direction.x * parameters.Direction.x));
         var deltaDistY = parameters.Direction.y == 0.0 ? double.MaxValue : Math.Abs(1.0 / parameters.Direction.y);
+        //var deltaDistY = Math.Sqrt(1 + (parameters.Direction.x * parameters.Direction.x) / (parameters.Direction.y * parameters.Direction.y)); 
         var initialSideDistX =
             parameters.Direction.x < 0.0
                 ? (parameters.From.x - initialMapX) * deltaDistX
@@ -25,17 +37,18 @@ public class StepRayCaster : AbstractRayCaster
             parameters.Direction.y < 0.0
                 ? (parameters.From.y - initialMapY) * deltaDistY
                 : (initialMapY + 1.0 - parameters.From.y) *deltaDistY;
-        _result = new RayCastResult(
+        
+        _result = new TrackingRayCastResult(
             IsComplete: false,
             IsHit: false,
             DeltaDistance: (deltaDistX, deltaDistY),
-            TotalDistance: (initialSideDistX, initialSideDistY),
+            TotalSideDistance: (initialSideDistX, initialSideDistY),
             MapHit: (initialMapX, initialMapY),
-            Side.NorthSouth
-        );
+            Side: Side.NorthSouth,
+            Steps: ImmutableArray<(double,double)>.Empty);
     }
 
-    public RayCastResult? Result => _result;
+    public TrackingRayCastResult? Result => _result;
 
     
     public override RayCastResult Cast(RayCastParameters parameters, Func<RayCastResult, bool> shouldContinueFunc, GameState game)
@@ -58,13 +71,13 @@ public class StepRayCaster : AbstractRayCaster
         var stepX = parameters.Direction.x < 0.0 ? -1 : 1;
         var stepY = parameters.Direction.y < 0.0 ? -1 : 1;
         
-        //while (shouldContinueFunc(_result))
-        if (shouldContinueFunc(_result))
+        if (shouldContinueFunc(_result!))
         {
+            var xIsLessThanY = _result!.TotalSideDistance.x < _result.TotalSideDistance.y;
             var (newMapX, newMapY, newSide, newSideDistX, newSideDistY) =
-                _result.TotalDistance.x < _result.TotalDistance.y
-                    ? (_result.MapHit.x + stepX, _result.MapHit.y, Side.NorthSouth, _result.TotalDistance.x + _result.DeltaDistance.x, _result.TotalDistance.y)
-                    : (_result.MapHit.x, _result.MapHit.y + stepY, Side.EastWest, _result.TotalDistance.x, _result.TotalDistance.y + _result.DeltaDistance.y);
+                xIsLessThanY
+                    ? (_result.MapHit.x + stepX, _result.MapHit.y, Side.NorthSouth, _result.TotalSideDistance.x + _result.DeltaDistance.x, _result.TotalSideDistance.y)
+                    : (_result.MapHit.x, _result.MapHit.y + stepY, Side.EastWest, _result.TotalSideDistance.x, _result.TotalSideDistance.y + _result.DeltaDistance.y);
             var newIsHit = game.Map[newMapY, newMapX] switch
             {
                 TurningPoint => parameters.IncludeTurningPoints,
@@ -83,13 +96,17 @@ public class StepRayCaster : AbstractRayCaster
             _result = _result with
             {
                 IsHit = newIsHit,
-                TotalDistance = (newSideDistX, newSideDistY),
+                TotalSideDistance = (newSideDistX, newSideDistY),
                 MapHit = (newMapX, newMapY),
                 Side = newSide,
+                Steps =
+                    xIsLessThanY
+                    ? _result.Steps.Add((_result.DeltaDistance.x * stepX * -1, 0.0))
+                    : _result.Steps.Add((0.0, _result.DeltaDistance.y * stepY))
             };
             _result = _result with {IsComplete = !shouldContinueFunc(_result)};
         }
 
-        return _result;
+        return _result!;
     }
 }

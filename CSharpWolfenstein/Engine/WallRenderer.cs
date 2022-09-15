@@ -69,8 +69,8 @@ public static class WallRenderer
                         };
                         var perpendicularWallDistance =
                             (rayCastResult.Side == Side.NorthSouth
-                                ? rayCastResult.TotalDistance.x - rayCastResult.DeltaDistance.x
-                                : rayCastResult.TotalDistance.y - rayCastResult.DeltaDistance.y) + doorDistanceModifier;
+                                ? rayCastResult.TotalSideDistance.x - rayCastResult.DeltaDistance.x
+                                : rayCastResult.TotalSideDistance.y - rayCastResult.DeltaDistance.y) + doorDistanceModifier;
                         var lineHeight = viewportSize.height / perpendicularWallDistance;
                         var startY = Math.Max(-lineHeight / 2.0 + viewportSize.height / 2.0, 0.0);
                         var endY = Math.Min(lineHeight / 2.0 + viewportSize.height / 2.0, viewportSize.height - 1.0);

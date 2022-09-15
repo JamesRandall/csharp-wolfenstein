@@ -13,9 +13,11 @@
         window.configureGameEvents = (dotNetHelper,_) => {
             document.addEventListener("keydown", event => {
                 if (!event.repeat)  dotNetHelper.invokeMethodAsync('OnKeyDown', event.key);
+                event.preventDefault();
             });
             document.addEventListener("keyup", event => {
                 if (!event.repeat) dotNetHelper.invokeMethodAsync('OnKeyUp', event.key);
+                event.preventDefault();
             });
         };
     </script>

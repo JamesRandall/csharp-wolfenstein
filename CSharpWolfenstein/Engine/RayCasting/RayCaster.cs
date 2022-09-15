@@ -34,16 +34,16 @@ public class RayCaster : AbstractRayCaster
             IsComplete: false,
             IsHit: false,
             DeltaDistance: (deltaDistX, deltaDistY),
-            TotalDistance: (initialSideDistX, initialSideDistY),
+            TotalSideDistance: (initialSideDistX, initialSideDistY),
             MapHit: (initialMapX, initialMapY),
-            Side.NorthSouth
+            initialSideDistX < initialSideDistY ? Side.NorthSouth : Side.EastWest
         );
         while (shouldContinueFunc(result))
         {
             var (newMapX, newMapY, newSide, newSideDistX, newSideDistY) =
-                result.TotalDistance.x < result.TotalDistance.y
-                    ? (result.MapHit.x + stepX, result.MapHit.y, Side.NorthSouth, result.TotalDistance.x + deltaDistX, result.TotalDistance.y)
-                    : (result.MapHit.x, result.MapHit.y + stepY, Side.EastWest, result.TotalDistance.x, result.TotalDistance.y + deltaDistY);
+                result.TotalSideDistance.x < result.TotalSideDistance.y
+                    ? (result.MapHit.x + stepX, result.MapHit.y, Side.NorthSouth, result.TotalSideDistance.x + deltaDistX, result.TotalSideDistance.y)
+                    : (result.MapHit.x, result.MapHit.y + stepY, Side.EastWest, result.TotalSideDistance.x, result.TotalSideDistance.y + deltaDistY);
             var newIsHit = game.Map[newMapY, newMapX] switch
             {
                 TurningPoint => parameters.IncludeTurningPoints,
@@ -63,45 +63,12 @@ public class RayCaster : AbstractRayCaster
                 IsComplete: false,
                 IsHit: newIsHit,
                 DeltaDistance: (deltaDistX, deltaDistY),
-                TotalDistance: (newSideDistX, newSideDistY),
+                TotalSideDistance: (newSideDistX, newSideDistY),
                 MapHit: (newMapX, newMapY),
                 Side: newSide
             );
         }
 
         return result with { IsComplete = true };
-    }
-
-    private static bool IsDoorHit(
-        (double x, double y) halfStepDelta,
-        (int x, int y) stepDelta,
-        RayCastParameters parameters,
-        (int x, int y) newMap,
-        Side newSide,
-        DoorState door)
-    {
-        const double tolerance = 0.0001;
-        var (posX, posY) = parameters.From;
-        var mapX2 = posX < newMap.x ? newMap.x - 1 : newMap.x;
-        var mapY2 = posY < newMap.y ? newMap.x + 1 : newMap.y;
-        var adjacent = newSide == Side.EastWest ? (double) mapY2 - posY : (double) mapX2 - posX + 1.0;
-        var rayMultiplier = newSide == Side.EastWest
-            ? adjacent / parameters.Direction.y
-            : adjacent / parameters.Direction.x;
-        var (rayPositionX, rayPositionY) =
-            (posX + parameters.Direction.x * rayMultiplier, posY + parameters.Direction.y * rayMultiplier);
-        var trueDeltaX = halfStepDelta.x < tolerance ? 100.0 : halfStepDelta.x;
-        var trueDeltaY = halfStepDelta.y < tolerance ? 100.0 : halfStepDelta.y;
-
-        if (newSide == Side.NorthSouth)
-        {
-            var trueYStep = Math.Sqrt(trueDeltaX * trueDeltaX - 1.0);
-            var halfStepInY = rayPositionY + (stepDelta.y * trueYStep) / 2.0;
-            return (Math.Abs(Math.Floor(halfStepInY) - newMap.y) < tolerance) && (halfStepInY - newMap.y) < (1.0 - door.Offset / 64.0);
-        }
-        // Side.EastWest
-        var trueXStep = Math.Sqrt(trueDeltaY * trueDeltaY - 1.0);
-        var halfStepInX = rayPositionX + (stepDelta.x * trueXStep) / 2.0;
-        return (Math.Abs(Math.Floor(halfStepInX) - newMap.x) < tolerance) && (halfStepInX - newMap.x) < (1.0 - door.Offset / 64.0);
     }
 }

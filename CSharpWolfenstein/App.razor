@@ -83,9 +83,16 @@
         _objRef?.Dispose();
     }
 
+    object _monitor = new object();
+    
     protected void OnPaintSurface(SKPaintSurfaceEventArgs e)
     {
         if (_gameEngine == null) return;
-        _gameEngine.NewFrame(e);
+        // the monitor prevents colliding frames in the event (pun intended) of a lengthy frame render time
+        if (Monitor.TryEnter(_monitor))
+        {
+            _gameEngine.NewFrame(e);
+            Monitor.Exit(_monitor);
+        }
     }
 }
