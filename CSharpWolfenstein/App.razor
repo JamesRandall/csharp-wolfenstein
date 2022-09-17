@@ -46,6 +46,7 @@
             "ArrowDown" => ControlState.Backward,
             "ArrowLeft" => ControlState.TurningLeft,
             "ArrowRight" => ControlState.TurningRight,
+            " " => ControlState.Action,
             _ => ControlState.None
         };
 
@@ -56,12 +57,20 @@
         System.Console.WriteLine(value);
         if (value.ToLower() == "t")
         {
-            _gameEngine = _gameEngine switch
+            Monitor.Enter(_monitor);
+            try
             {
-                GameEngine ge => new RayCastDemonstrationEngine(ge, new(WallRenderer.RenderWalls, new StepRayCaster())),
-                RayCastDemonstrationEngine re => new GameEngine(re, new(WallRenderer.RenderWalls, new RayCaster())),
-                _ => throw new GameEngineNotRecognizedException()
-            };
+                _gameEngine = _gameEngine switch
+                {
+                    GameEngine ge => new RayCastDemonstrationEngine(ge, new(WallRenderer.RenderWalls, new RayCaster())),
+                    RayCastDemonstrationEngine re => new GameEngine(re, new(WallRenderer.RenderWalls, new RayCaster())),
+                    _ => throw new GameEngineNotRecognizedException()
+                    };
+            }
+            finally
+            {
+                Monitor.Exit(_monitor);
+            }
         }
         else
         {

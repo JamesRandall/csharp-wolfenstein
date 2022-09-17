@@ -1,5 +1,8 @@
+using System.Collections.Immutable;
 using System.Numerics;
 using CSharpWolfenstein.Extensions;
+
+using MapArray = System.Collections.Immutable.ImmutableArray<System.Collections.Immutable.ImmutableArray<Cell>>;
 
 namespace CSharpWolfenstein.Assets
 {
@@ -7,6 +10,40 @@ namespace CSharpWolfenstein.Assets
     
     namespace Compression
     {
+        public static class MapArrayExtensions
+        {
+            public static MapArray PatchWallsSurroundingDoors(this MapArray mapToPatch, List<DoorState> doorStates)
+            {
+                Cell Patch(Cell cell, int colIndex, int rowIndex)
+                {
+                    if (cell is Wall wall)
+                    {
+                        var hasNorthSouthDoor =
+                            doorStates.Exists(d => d.MapPosition == (colIndex + 1, rowIndex)) ||
+                            doorStates.Exists(d => d.MapPosition == (colIndex - 1, rowIndex));
+                        var hasEastWestDoor =
+                            doorStates.Exists(d => d.MapPosition == (colIndex, rowIndex + 1)) ||
+                            doorStates.Exists(d => d.MapPosition == (colIndex, rowIndex - 1));
+                        return wall with
+                        {
+                            EastWestTextureIndex = hasEastWestDoor ? 101 : wall.EastWestTextureIndex,
+                            NorthSouthTextureIndex =
+                            hasNorthSouthDoor ? 100 : wall.NorthSouthTextureIndex
+                        };
+                    }
+                    return cell;
+                }
+                
+                return
+                    ImmutableArray.Create(
+                        mapToPatch.Select((row, rowIndex) =>
+                            ImmutableArray.Create(
+                                row.Select((cell, colIndex) => Patch(cell,colIndex,rowIndex)).ToArray()
+                            )
+                        ).ToArray());
+            }
+        }
+        
         public static class ByteArrayExtensions
         {
             public static byte[] CarmackDecode(this byte[] source)
@@ -114,10 +151,10 @@ namespace CSharpWolfenstein.Assets
     public record Level(
         int Width,
         int Height,
-        Cell[,] Map,
+        MapArray Map,
         int[,] Areas,
         int NumberOfAreas,
-        IReadOnlyCollection<AbstractGameObject> AbstractGameObjects,
+        ImmutableArray<AbstractGameObject> AbstractGameObjects,
         Camera PlayerStartingPosition,
         DoorState[] Doors
     )
@@ -125,7 +162,6 @@ namespace CSharpWolfenstein.Assets
         public static Level Create(AssetPack assetPack, DifficultyLevel difficulty, int levelIndex)
         {
             const int mapSize = 64;
-            bool IsDoor(ushort value) => value >= 90 && value <= 101;
             int WallTextureIndex(ushort value) => 2 * value - 1;
 
             ushort GetPlaneValue(byte[] plane, (int colIndex, int rowIndex) mapPosition) =>
@@ -182,49 +218,29 @@ namespace CSharpWolfenstein.Assets
                 };
             }
 
-            (Cell[,] cells, List<DoorState> doors) ConstructMapLayout(byte[] plane0, byte[] plane1)
+            (MapArray cells, List<DoorState> doors) ConstructMapLayout(byte[] plane0, byte[] plane1)
             {
                 var doorList = new List<DoorState>();
-                var cellArray = new Cell[mapSize, mapSize];
-                Enumerable.Range(0, mapSize).Iter(rowIndex =>
-                    Enumerable.Range(0, mapSize).Iter(colIndex =>
+                var immutableMap = ImmutableArray.Create(
+                Enumerable.Range(0, mapSize).Select(rowIndex =>
                     {
-                        var mapPosition = (colIndex, rowIndex);
-                        var rawMapCell = GetPlaneValue(plane0, mapPosition);
-                        var cell = rawMapCell switch
+                        List<Cell> row = new List<Cell>();
+                        Enumerable.Range(0, mapSize).Iter(colIndex =>
                         {
-                            <= 63 => CreateWall(mapPosition, rawMapCell),
-                            >= 90 and <= 101 => CreateDoor(mapPosition, rawMapCell, doorList),
-                            _ => CreateTurningPointOrEmpty(mapPosition, rawMapCell, GetPlaneValue(plane1, mapPosition))
-                        };
-                        cellArray[rowIndex, colIndex] = cell;
-                    })
-                );
-                return (cellArray, doorList);
-            }
-
-            void PatchWallsSurroundingDoors(Cell[,] cellsToPatch, List<DoorState> doorStates)
-            {
-                Enumerable.Range(0, mapSize).Iter(rowIndex =>
-                    Enumerable.Range(0, mapSize).Iter(colIndex =>
-                    {
-                        var cell = cellsToPatch[rowIndex, colIndex];
-                        if (cell is Wall wall)
-                        {
-                            var hasNorthSouthDoor =
-                                doorStates.Exists(d => d.MapPosition == (colIndex + 1, rowIndex)) ||
-                                doorStates.Exists(d => d.MapPosition == (colIndex - 1, rowIndex));
-                            var hasEastWestDoor =
-                                doorStates.Exists(d => d.MapPosition == (colIndex, rowIndex + 1)) ||
-                                doorStates.Exists(d => d.MapPosition == (colIndex, rowIndex - 1));
-                            cellsToPatch[rowIndex, colIndex] = wall with
+                            var mapPosition = (colIndex, rowIndex);
+                            var rawMapCell = GetPlaneValue(plane0, mapPosition);
+                            var cell = rawMapCell switch
                             {
-                                EastWestTextureIndex = hasEastWestDoor ? 101 : wall.EastWestTextureIndex,
-                                NorthSouthTextureIndex = hasNorthSouthDoor ? 100 : wall.NorthSouthTextureIndex
+                                <= 63 => CreateWall(mapPosition, rawMapCell),
+                                >= 90 and <= 101 => CreateDoor(mapPosition, rawMapCell, doorList),
+                                _ => CreateTurningPointOrEmpty(mapPosition, rawMapCell, GetPlaneValue(plane1, mapPosition))
                             };
-                        }
-                    })
+                            row.Add(cell);
+                        });
+                        return ImmutableArray.Create(row.ToArray());
+                    }).ToArray()
                 );
+                return (immutableMap, doorList);
             }
 
             Camera GetStartingPosition(byte[] plane)
@@ -238,19 +254,19 @@ namespace CSharpWolfenstein.Assets
                         {
                             var direction = planeValue switch
                             {
-                                19 => new Vector2(0.0f, -1.0f),
-                                20 => new Vector2(-1.0f, 0.0f),
-                                21 => new Vector2(0.0f, 1.0f),
-                                22 => new Vector2(1.0f, 0.0f),
+                                19 => new Vector2D(0.0f, -1.0f),
+                                20 => new Vector2D(1.0f, 0.0f),
+                                21 => new Vector2D(0.0f, 1.0f),
+                                22 => new Vector2D(-1.0f, 0.0f),
                                 _ => throw new StartingPositionException()
                             };
                             var fieldOfView = 1.0f;
-                            var startingPosition = new Vector2(mapSize - colIndex - 0.5f, rowIndex + 0.5f);
+                            //var startingPosition = new Vector2D(mapSize - colIndex - 0.5f, rowIndex + 0.5f);
+                            var startingPosition = new Vector2D(colIndex + 0.5f, rowIndex + 0.5f);
                             return new Camera(
                                 Position: startingPosition,
                                 Direction: direction,
-                                Plane: Vector2.Multiply(direction.CrossProduct(),
-                                    new Vector2(fieldOfView, fieldOfView)),
+                                Plane: direction.CrossProduct * fieldOfView,
                                 FieldOfView: fieldOfView
                             );
                         }
@@ -269,25 +285,17 @@ namespace CSharpWolfenstein.Assets
             var plane0 = assetPack.GameMaps[plane0Start..plane0End].CarmackDecode().RlewDecode(assetPack.MapHeader);
             var plane1 = assetPack.GameMaps[plane1Start..plane1End].CarmackDecode().RlewDecode(assetPack.MapHeader);
             var (cells, doors) = ConstructMapLayout(plane0, plane1);
-            PatchWallsSurroundingDoors(cells, doors);
 
-            // Before we return it we have to flip the direction of the x axis
-            var flippedCells = new Cell[mapSize, mapSize];
-            Enumerable.Range(0,mapSize).Iter(row =>
-                Enumerable.Range(0,mapSize).Iter(col => 
-                    flippedCells[row,mapSize-1-col] = cells[row,col]
-                )
-            );
-            
             return new Level(
                 Width: mapSize,
                 Height: mapSize,
-                Map: cells.FlipHorizontal(),
+                Map: cells.PatchWallsSurroundingDoors(doors), //.FlipHorizontal(),
                 Areas: new int [0, 0],
                 NumberOfAreas: 0,
-                AbstractGameObjects: Array.Empty<AbstractGameObject>(),
+                AbstractGameObjects: ImmutableArray<AbstractGameObject>.Empty,
                 PlayerStartingPosition: GetStartingPosition(plane1),
-                Doors: doors.Select(x => x with { MapPosition = x.MapPosition.FlipHorizontal()}).ToArray());
+                Doors: doors.ToArray()  // .Select(x => x with { MapPosition = x.MapPosition.FlipHorizontal()}).ToArray());
+            );
         }
     }
 }

@@ -5,7 +5,8 @@ namespace CSharpWolfenstein.Engine.RayCasting;
 
 public class RayCaster : AbstractRayCaster
 {
-    public override RayCastResult Cast(RayCastParameters parameters, Func<RayCastResult, bool> shouldContinueFunc, GameState game)
+    public override RayCastResult Cast(GameState game, RayCastParameters parameters,
+        Func<RayCastResult, bool> shouldContinueFunc)
     {
         var (initialMapX, initialMapY) = parameters.From.ToMap();
         var deltaDistX = parameters.Direction.x == 0.0 ? double.MaxValue : Math.Abs(1.0 / parameters.Direction.x);
@@ -44,7 +45,7 @@ public class RayCaster : AbstractRayCaster
                 result.TotalSideDistance.x < result.TotalSideDistance.y
                     ? (result.MapHit.x + stepX, result.MapHit.y, Side.NorthSouth, result.TotalSideDistance.x + deltaDistX, result.TotalSideDistance.y)
                     : (result.MapHit.x, result.MapHit.y + stepY, Side.EastWest, result.TotalSideDistance.x, result.TotalSideDistance.y + deltaDistY);
-            var newIsHit = game.Map[newMapY, newMapX] switch
+            var newIsHit = game.Map[newMapY][newMapX] switch
             {
                 TurningPoint => parameters.IncludeTurningPoints,
                 Empty => false,

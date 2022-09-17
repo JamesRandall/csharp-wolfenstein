@@ -67,8 +67,8 @@ namespace CSharpWolfenstein.Engine
                 {
                     Camera = input.Camera with
                     {
-                        Direction = new Vector2((float)newDirX, (float)newDirY),
-                        Plane = new Vector2((float)newPlaneX, (float)newPlaneY)
+                        Direction = new Vector2D((float)newDirX, (float)newDirY),
+                        Plane = new Vector2D((float)newPlaneX, (float)newPlaneY)
                     }
                 };
             }
@@ -78,8 +78,8 @@ namespace CSharpWolfenstein.Engine
                 {
                     (g,d) => g.KeyPressed(ControlState.Forward) ? Move(g, movementSpeed) : g,
                     (g, d) => g.KeyPressed(ControlState.Backward) ? Move(game, -movementSpeed / 2.0) : g,
-                    (g, d) => g.KeyPressed(ControlState.TurningLeft) ? Rotate(game, 1.0) : g,
-                    (g, d) => g.KeyPressed(ControlState.TurningRight) ? Rotate(game, -1.0) : g
+                    (g, d) => g.KeyPressed(ControlState.TurningLeft) ? Rotate(game, -1.0) : g,
+                    (g, d) => g.KeyPressed(ControlState.TurningRight) ? Rotate(game, 1.0) : g
                 }.Update(game, delta);
         }
     }

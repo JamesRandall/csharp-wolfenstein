@@ -59,10 +59,10 @@ public static class WallRenderer
                         game.Camera.Direction.Y + game.Camera.Plane.Y * cameraX
                     );
                     var parameters = baseParameters with { Direction = rayDirection };
-                    var rayCastResult = rayCaster.Cast(parameters, ShouldContinueCast, game);
+                    var rayCastResult = rayCaster.Cast(game, parameters, ShouldContinueCast);
                     if (rayCastResult.IsComplete) // this is to allow the step based ray caster to, errr, step
                     {
-                        var doorDistanceModifier = game.Map[rayCastResult.MapHit.y, rayCastResult.MapHit.x] switch
+                        var doorDistanceModifier = game.Map[rayCastResult.MapHit.y][rayCastResult.MapHit.x] switch
                         {
                             Door => 0.5,
                             _ => 0.0
@@ -75,7 +75,7 @@ public static class WallRenderer
                         var startY = Math.Max(-lineHeight / 2.0 + viewportSize.height / 2.0, 0.0);
                         var endY = Math.Min(lineHeight / 2.0 + viewportSize.height / 2.0, viewportSize.height - 1.0);
 
-                        if (game.Map[rayCastResult.MapHit.y, rayCastResult.MapHit.x] is Wall wall)
+                        if (game.Map[rayCastResult.MapHit.y][rayCastResult.MapHit.x] is Wall wall)
                         {
                             var wallX =
                                 rayCastResult.Side == Side.NorthSouth
@@ -92,7 +92,7 @@ public static class WallRenderer
 
                             RenderTextureColumn(lineHeight, startY, textureIndex, endY, textureX, destPtr, viewportX);
                         }
-                        else if (game.Map[rayCastResult.MapHit.y, rayCastResult.MapHit.x] is Door doorCell)
+                        else if (game.Map[rayCastResult.MapHit.y][rayCastResult.MapHit.x] is Door doorCell)
                         {
                             var door = game.Doors[doorCell.DoorIndex];
 

@@ -7,8 +7,8 @@ public class EnemyGameObjectTests
     protected EnemyGameObject BasicGuard =>
         new EnemyGameObject(
             new BasicGameObjectProperties(
-                Vector2.Zero,
-                Vector2.One,
+                Vector2D.Zero,
+                Vector2D.One,
                 0.0f,
                 0,
                 true,

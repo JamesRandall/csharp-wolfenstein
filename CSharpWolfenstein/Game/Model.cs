@@ -9,6 +9,50 @@ using CSharpWolfenstein.Engine;
 using OneOf;
 using OneOf.Types;
 
+using MapArray = System.Collections.Immutable.ImmutableArray<System.Collections.Immutable.ImmutableArray<Cell>>;
+
+public record Vector2D(double X, double Y)
+{
+    public Vector2D CrossProduct => new Vector2D(Y, X);
+    public static Vector2D operator -(Vector2D a, Vector2D b) => new Vector2D(a.X - b.X, a.Y - b.Y);
+    public static Vector2D operator +(Vector2D a, Vector2D b) => new Vector2D(a.X + b.X, a.Y + b.Y);
+    public static Vector2D operator *(Vector2D a, double b) => new Vector2D(a.X * b, a.Y * b);
+    public static Vector2D operator /(Vector2D a, double b) => new Vector2D(a.X / b, a.Y / b);
+    public double UnsquaredDistanceFrom(Vector2D other) => (X - other.X) * (X - other.X) + (Y - other.Y) * (Y - other.Y);
+    public Vector2D Normalize()
+    {
+        var distance = Math.Sqrt(X * X + Y * Y);
+        return new(X / distance, Y / distance);
+    }
+    public Vector2D Abs() => new(Math.Abs(X), Math.Abs(Y));
+    public Vector2D Reverse() => new(X * -1.0, Y * -1.0);
+
+    public Vector2D Rotate(double angleInRadians)
+    {
+        var ca = Math.Cos(angleInRadians);
+        var sa = Math.Sin(angleInRadians);
+        return new Vector2D(ca * X - sa * Y, sa * X + ca * Y);
+    }
+    public string StringValue => $"{{ vX: {X}, vY: {Y} }}";
+    public bool IsBetween(Vector2D a, Vector2D b) =>
+        (a.Y * b.X - a.X * b.Y) * (a.Y * X - a.X * Y) >= 0 &&
+        (X * b.X - X * b.Y) * (Y * a.X - X * a.Y) >= 0;
+
+    public double Magnitude() => Math.Sqrt(X * X + Y * Y);
+
+    public double AngleBetween(Vector2D b) => Math.Acos((X * b.X + Y * b.Y) / Magnitude() * b.Magnitude());
+
+    public Vector2D LimitToMapUnit() =>
+        new(X > 1.0 ? 1.0 : X < -1.0 ? -1.0 : X,
+            X > 1.0 ? 1.0 : X < -1.0 ? -1.0 : X);
+
+    public static Vector2D CreateFromMapPosition((int x, int y) mapPosition) =>
+        new Vector2D(mapPosition.x + 0.5, mapPosition.y + 0.5);
+
+    public static Vector2D Zero => new(0.0, 0.0);
+    public static Vector2D One => new(1.0, 1.0);
+}
+
 public class Option<T> : OneOfBase<T, OneOf.Types.None>
 {
     protected Option(OneOf<T, None> input) : base(input)
@@ -35,15 +79,15 @@ public enum DifficultyLevel
 // This is using properties rather than readonly's as vector is not immutable (shame on you MS, shame on you)
 public static class Direction
 {
-    public static Vector2 North => new(0.0f, -1.0f);
-    public static Vector2 NorthEast => Vector2.Normalize(new Vector2(-1.0f, -1.0f));
-    public static Vector2 East => new(-1.0f, -0.0f);
-    public static Vector2 SouthEast => Vector2.Normalize(new Vector2(-1.0f, 1.0f));
-    public static Vector2 South => new(0.0f, 1.0f);
-    public static Vector2 SouthWest => Vector2.Normalize(new Vector2(1.0f, 1.0f));
-    public static Vector2 West => new(1.0f, -0.0f);
-    public static Vector2 NorthWest => Vector2.Normalize(new Vector2(1.0f, -1.0f));
-    public static Vector2 None => new(0.0f, 0.0f);
+    public static Vector2D North => new(0.0, -1.0);
+    public static Vector2D NorthEast => new Vector2D(1.0, -1.0).Normalize();
+    public static Vector2D East => new(1.0f, -0.0f);
+    public static Vector2D SouthEast => new Vector2D(1.0f, 1.0f).Normalize();
+    public static Vector2D South => new(0.0f, 1.0f);
+    public static Vector2D SouthWest => new Vector2D(-1.0f, 1.0f).Normalize();
+    public static Vector2D West => new(-1.0f, -0.0f);
+    public static Vector2D NorthWest => new Vector2D(-1.0f, -1.0f).Normalize();
+    public static Vector2D None => new(0.0f, 0.0f);
 }
 
 public enum MapDirection
@@ -89,18 +133,18 @@ public static class MapDirectionExtensions
         return direction switch
         {
             MapDirection.North => (0, -1),
-            MapDirection.NorthEast => (-1, -1),
-            MapDirection.East => (-1, 0),
-            MapDirection.SouthEast => (-1, 1),
+            MapDirection.NorthEast => (1, -1),
+            MapDirection.East => (1, 0),
+            MapDirection.SouthEast => (1, 1),
             MapDirection.South => (0, 1),
-            MapDirection.SouthWest => (1, 1),
-            MapDirection.West => (1, 0),
-            MapDirection.NorthWest => (1, -1),
+            MapDirection.SouthWest => (-1, 1),
+            MapDirection.West => (-1, 0),
+            MapDirection.NorthWest => (-1, -1),
             _ => (0, 0)
         };
     }
 
-    public static Vector2 ToVector(this MapDirection direction)
+    public static Vector2D ToVector(this MapDirection direction)
     {
         return direction switch
         {
@@ -284,8 +328,8 @@ public class EnemyState : OneOfBase<
 }
 
 public record BasicGameObjectProperties(
-    Vector2 Position,
-    Vector2 PlayerRelativePosition,
+    Vector2D Position,
+    Vector2D PlayerRelativePosition,
     double UnsquaredDistanceFromPlayer,
     int SpriteIndex,
     bool CollidesWithBullets,
@@ -326,7 +370,7 @@ public record StaticGameObject(BasicGameObjectProperties CommonProperties) : Abs
 public record EnemyGameObject(BasicGameObjectProperties CommonProperties, EnemyProperties EnemyProperties)
     : AbstractGameObject
 {
-    public Vector2 DirectionVector => EnemyProperties.Direction.ToVector();
+    public Vector2D DirectionVector => EnemyProperties.Direction.ToVector();
     public int StationarySpriteBlockIndex => CommonProperties.SpriteIndex;
     public int NumberOfMovementAnimationFrames => EnemyProperties.SpriteBlocks - 1;
 
@@ -450,9 +494,9 @@ public record Player(
 }
 
 public record Camera(
-    Vector2 Position,
-    Vector2 Direction,
-    Vector2 Plane,
+    Vector2D Position,
+    Vector2D Direction,
+    Vector2D Plane,
     double FieldOfView
 );
 

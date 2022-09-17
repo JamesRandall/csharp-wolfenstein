@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using CSharpWolfenstein.Assets;
 using CSharpWolfenstein.Engine;
 
@@ -5,16 +6,16 @@ namespace CSharpWolfenstein.Game;
 
 public record GameState(
     int Level,
-    Cell[,] Map,
+    ImmutableArray<ImmutableArray<Cell>> Map,
     int[,] Areas,
-    IReadOnlyCollection<CompositeArea> CompositeAreas,
-    IReadOnlyCollection<AbstractGameObject> GameObjects,
+    ImmutableArray<CompositeArea> CompositeAreas,
+    ImmutableArray<AbstractGameObject> GameObjects,
     Player Player,
     Camera Camera,
     ControlState ControlState,
     bool IsFiring,
     Option<double> TimeToNextWeaponFrame,
-    DoorState[] Doors,
+    ImmutableArray<DoorState> Doors,
     Option<OverlayAnimation> ViewportFilter,
     Option<PixelDissolver> PixelDissolver,
     Func<GameState, Player, GameState> ResetLevel
@@ -30,14 +31,14 @@ public record GameState(
             Level: 0,
             Map: level.Map,
             Areas: new int[0, 0],
-            CompositeAreas: Array.Empty<CompositeArea>(),
-            GameObjects: Array.Empty<AbstractGameObject>(),
+            CompositeAreas: ImmutableArray<CompositeArea>.Empty,
+            GameObjects: ImmutableArray<AbstractGameObject>.Empty,
             Player: Player.NewPlayer(assetPack),
             Camera: level.PlayerStartingPosition,
             ControlState: ControlState.None,
             IsFiring: false,
             TimeToNextWeaponFrame: Option<double>.None,
-            Doors: level.Doors,
+            Doors: ImmutableArray.Create(level.Doors),
             ViewportFilter: Option<OverlayAnimation>.None,
             PixelDissolver: Option<PixelDissolver>.None,
             ResetLevel: (game, player) => game

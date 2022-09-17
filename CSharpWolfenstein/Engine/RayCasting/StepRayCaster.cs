@@ -10,8 +10,8 @@ public record TrackingRayCastResult(
     (double x, double y) TotalSideDistance,
     (int x, int y) MapHit,
     Side Side,
-    ImmutableArray<(double x, double y)> Steps) : RayCastResult(IsComplete, IsHit, DeltaDistance, TotalSideDistance, MapHit,
-    Side);
+    ImmutableArray<(int x, int y)> MapSquaresTested)
+        : RayCastResult(IsComplete, IsHit, DeltaDistance, TotalSideDistance, MapHit, Side);
 
 public class StepRayCaster : AbstractRayCaster
 {
@@ -26,9 +26,7 @@ public class StepRayCaster : AbstractRayCaster
     {
         var (initialMapX, initialMapY) = parameters.From.ToMap();
         var deltaDistX = parameters.Direction.x == 0.0 ? double.MaxValue : Math.Abs(1.0 / parameters.Direction.x);
-        //var deltaDistX = Math.Sqrt(1 + parameters.Direction.y * parameters.Direction.y / (parameters.Direction.x * parameters.Direction.x));
         var deltaDistY = parameters.Direction.y == 0.0 ? double.MaxValue : Math.Abs(1.0 / parameters.Direction.y);
-        //var deltaDistY = Math.Sqrt(1 + (parameters.Direction.x * parameters.Direction.x) / (parameters.Direction.y * parameters.Direction.y)); 
         var initialSideDistX =
             parameters.Direction.x < 0.0
                 ? (parameters.From.x - initialMapX) * deltaDistX
@@ -45,13 +43,14 @@ public class StepRayCaster : AbstractRayCaster
             TotalSideDistance: (initialSideDistX, initialSideDistY),
             MapHit: (initialMapX, initialMapY),
             Side: Side.NorthSouth,
-            Steps: ImmutableArray<(double,double)>.Empty);
+            MapSquaresTested: ImmutableArray.Create((initialMapX, initialMapY))
+        );
     }
-
-    public TrackingRayCastResult? Result => _result;
-
     
-    public override RayCastResult Cast(RayCastParameters parameters, Func<RayCastResult, bool> shouldContinueFunc, GameState game)
+    public TrackingRayCastResult? Result => _result;
+    
+    public override RayCastResult Cast(GameState game, RayCastParameters parameters,
+        Func<RayCastResult, bool> shouldContinueFunc)
     {
         if (_result == null) Start(parameters);
         //if (!_canStep) return _result!;
@@ -78,7 +77,7 @@ public class StepRayCaster : AbstractRayCaster
                 xIsLessThanY
                     ? (_result.MapHit.x + stepX, _result.MapHit.y, Side.NorthSouth, _result.TotalSideDistance.x + _result.DeltaDistance.x, _result.TotalSideDistance.y)
                     : (_result.MapHit.x, _result.MapHit.y + stepY, Side.EastWest, _result.TotalSideDistance.x, _result.TotalSideDistance.y + _result.DeltaDistance.y);
-            var newIsHit = game.Map[newMapY, newMapX] switch
+            var newIsHit = game.Map[newMapY][newMapX] switch
             {
                 TurningPoint => parameters.IncludeTurningPoints,
                 Empty => false,
@@ -93,18 +92,16 @@ public class StepRayCaster : AbstractRayCaster
                 ),
                 _ => false
             };
-            _result = _result with
-            {
-                IsHit = newIsHit,
-                TotalSideDistance = (newSideDistX, newSideDistY),
-                MapHit = (newMapX, newMapY),
-                Side = newSide,
-                Steps =
-                    xIsLessThanY
-                    ? _result.Steps.Add((_result.DeltaDistance.x * stepX * -1, 0.0))
-                    : _result.Steps.Add((0.0, _result.DeltaDistance.y * stepY))
-            };
-            _result = _result with {IsComplete = !shouldContinueFunc(_result)};
+            var updatedResult =
+                _result with
+                {
+                    IsHit = newIsHit,
+                    TotalSideDistance = (newSideDistX, newSideDistY),
+                    MapHit = (newMapX, newMapY),
+                    Side = newSide,
+                    MapSquaresTested = _result.MapSquaresTested.Add((newMapX, newMapY))
+                };
+            _result = updatedResult with {IsComplete = !shouldContinueFunc(updatedResult)};
         }
 
         return _result!;

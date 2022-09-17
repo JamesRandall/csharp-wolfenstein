@@ -18,8 +18,8 @@ public record RayCastResult(
 
 public abstract class AbstractRayCaster
 {
-    public abstract RayCastResult Cast(RayCastParameters parameters, Func<RayCastResult, bool> shouldContinueFunc,
-        GameState game);
+    public abstract RayCastResult Cast(GameState game, RayCastParameters parameters,
+        Func<RayCastResult, bool> shouldContinueFunc);
     
     protected static bool IsDoorHit(
         (double x, double y) halfStepDelta,
