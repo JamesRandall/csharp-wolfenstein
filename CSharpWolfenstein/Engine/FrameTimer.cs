@@ -2,8 +2,8 @@ namespace CSharpWolfenstein.Engine;
 
 public class FrameTimer
 {
-    private int _tickIndex = 0;
-    private long _tickSum = 0;
+    private int _tickIndex;
+    private long _tickSum;
     private readonly long[] _tickList = new long[100];
     private long _lastTick = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
     

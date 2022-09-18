@@ -9,6 +9,7 @@ namespace CSharpWolfenstein.Engine;
 
 public class RayCastDemonstrationEngine : AbstractGameEngine
 {
+    private const double StepDistanceSpeed = 250.0;
     private const int StartingStripToDraw = 0;
     const int GridSize = 32;
     private ViewportRenderer _viewportRenderer;
@@ -18,10 +19,10 @@ public class RayCastDemonstrationEngine : AbstractGameEngine
     private readonly SKBitmap _bitmap = new(Constants.WolfViewportWidth, Constants.WolfViewportHeight);
     private int _stripToDraw = StartingStripToDraw;
     private bool _isFirstRender = true;
-    private double _rayHitX = 0.0;
-    private double _rayHitY = 0.0;
-    private int _holdForFrame = 0;
-    private bool _moveToNextRay = false;
+    private double _rayHitX;
+    private double _rayHitY;
+    private int _holdForFrame;
+    private bool _moveToNextRay;
     
     public RayCastDemonstrationEngine(GameEngine gameEngine, ViewportRenderer viewportRenderer)
     {
@@ -37,8 +38,8 @@ public class RayCastDemonstrationEngine : AbstractGameEngine
 
     public override void NewFrame(SKPaintSurfaceEventArgs e)
     {
-        var (delta,fps) = _frameTimer.GetCurrentTimings();
-        Render(e, delta, fps);
+        var (delta,_) = _frameTimer.GetCurrentTimings();
+        Render(e, delta);
     }
 
     private (float,float) GetViewportPosition()
@@ -62,17 +63,17 @@ public class RayCastDemonstrationEngine : AbstractGameEngine
 
     private void ConfigureDirectRay(float viewportLeft, float viewportTop, SKImageInfo info)
     {
-        var (mapPosition, mapFrom, mapTo) = GetMapMetrics(viewportLeft, viewportTop, info);
+        var (mapPosition, mapFrom, _) = GetMapMetrics(viewportLeft, viewportTop, info);
         // The cast needs to take place in game co-ordinates
         var rayCaster = new RayCaster();
         var cameraX = 2.0 * _stripToDraw / Constants.WolfViewportWidth - 1.0;
-        var rayDirection = (
-            x:GameState.Camera.Direction.X + GameState.Camera.Plane.X * cameraX,
-            y:GameState.Camera.Direction.Y + GameState.Camera.Plane.Y * cameraX
+        var rayDirection = new Vector2D(
+            X:GameState.Camera.Direction.X + GameState.Camera.Plane.X * cameraX,
+            Y:GameState.Camera.Direction.Y + GameState.Camera.Plane.Y * cameraX
         );
         var parameters = new RayCastParameters(
             IncludeTurningPoints: false,
-            From: (GameState.Camera.Position.X, GameState.Camera.Position.Y),
+            From: new(GameState.Camera.Position.X, GameState.Camera.Position.Y),
             Direction: rayDirection
         );
         var rayCastResult = rayCaster.Cast(GameState, parameters, WallRenderer.ShouldContinueCast);
@@ -86,8 +87,8 @@ public class RayCastDemonstrationEngine : AbstractGameEngine
                 ? rayCastResult.TotalSideDistance.x - rayCastResult.DeltaDistance.x
                 : rayCastResult.TotalSideDistance.y - rayCastResult.DeltaDistance.y) + doorDistanceModifier;
         var wallX = rayCastResult.Side == Side.NorthSouth
-            ? GameState.Camera.Position.Y + perpendicularWallDistance * rayDirection.y
-            : GameState.Camera.Position.X + perpendicularWallDistance * rayDirection.x;
+            ? GameState.Camera.Position.Y + perpendicularWallDistance * rayDirection.Y
+            : GameState.Camera.Position.X + perpendicularWallDistance * rayDirection.X;
         var clampedWallX = wallX - Math.Floor(wallX);
         
         float x1 = (rayCastResult.MapHit.x - mapFrom.x) * GridSize + (int)mapPosition.x;
@@ -96,16 +97,16 @@ public class RayCastDemonstrationEngine : AbstractGameEngine
         if (rayCastResult.Side == Side.EastWest)
         {
             _rayHitX = x1 + clampedWallX * GridSize;
-            _rayHitY = rayDirection.y >= 0 ? y1 + (GridSize*doorDistanceModifier) : y1 - GridSize*doorDistanceModifier + GridSize;
+            _rayHitY = rayDirection.Y >= 0 ? y1 + (GridSize*doorDistanceModifier) : y1 - GridSize*doorDistanceModifier + GridSize;
         }
         else
         {
             _rayHitY = y1 + clampedWallX * GridSize;
-            _rayHitX = rayDirection.x <= 0 ? x1 + (GridSize - GridSize*doorDistanceModifier) : x1 + GridSize*doorDistanceModifier;
+            _rayHitX = rayDirection.X <= 0 ? x1 + (GridSize - GridSize*doorDistanceModifier) : x1 + GridSize*doorDistanceModifier;
         }
     }
     
-    private void Render(SKPaintSurfaceEventArgs e, double delta, double fps)
+    private void Render(SKPaintSurfaceEventArgs e, double delta)
     {
         var (viewportLeft, viewportTop) = GetViewportPosition();
         var canvas = e.Surface.Canvas;
@@ -119,6 +120,7 @@ public class RayCastDemonstrationEngine : AbstractGameEngine
         _timeUntilNextStep -= delta;
         if (_timeUntilNextStep < 0.0)
         {
+            _timeUntilNextStep += _speed;
             StepRayCaster? stepRayCaster = _viewportRenderer.RayCaster as StepRayCaster;
             
             if (_holdForFrame > 0)
@@ -143,8 +145,7 @@ public class RayCastDemonstrationEngine : AbstractGameEngine
                     }
                 }
                 
-                // we only advance the ray caster on a timed basis
-                _timeUntilNextStep += _speed;
+                
                 {
                     unsafe
                     {
@@ -208,10 +209,10 @@ public class RayCastDemonstrationEngine : AbstractGameEngine
 
     void RenderMapSteps(float viewportLeft, float viewportTop, TrackingRayCastResult rayCastResult, SKImageInfo info, SKCanvas canvas)
     {
-        var (position, mapFrom, mapTo) = GetMapMetrics(viewportLeft, viewportTop, info);
+        var (position, mapFrom, _) = GetMapMetrics(viewportLeft, viewportTop, info);
         
         var linePaint = new SKPaint {Color = SKColors.ForestGreen, Style = SKPaintStyle.Stroke, StrokeWidth = 2.0f};
-        foreach (var mapPosition in rayCastResult.MapSquaresTested.Skip(1))
+        foreach (var mapPosition in rayCastResult.MapSquaresTested) //.Skip(1))
         {
             var (x, y) = mapPosition;
             float x1 = (x - mapFrom.x) * GridSize + (int)position.x;
@@ -222,7 +223,7 @@ public class RayCastDemonstrationEngine : AbstractGameEngine
 
     void RenderRay(float viewportLeft, float viewportTop, SKImageInfo info, SKCanvas canvas)
     {
-        var (position, mapFrom, mapTo) = GetMapMetrics(viewportLeft, viewportTop, info);
+        var (position, mapFrom, _) = GetMapMetrics(viewportLeft, viewportTop, info);
         var cameraPosition = GameState.Camera.Position;
         var relativePlayerX = cameraPosition.X - mapFrom.x;
         var relativePlayerY = cameraPosition.Y - mapFrom.y;
@@ -334,7 +335,7 @@ public class RayCastDemonstrationEngine : AbstractGameEngine
                 _viewportRenderer.RayCaster is RayCaster
                     ? new ViewportRenderer(WallRenderer.RenderWalls, new StepRayCaster())
                     : new ViewportRenderer(WallRenderer.RenderWalls, new RayCaster());
-            _timeUntilNextStep = _speed = _viewportRenderer.RayCaster is StepRayCaster ? 500.0 : 0.0;
+            _timeUntilNextStep = _speed = _viewportRenderer.RayCaster is StepRayCaster ? StepDistanceSpeed : 0.0;
         }
     }
 

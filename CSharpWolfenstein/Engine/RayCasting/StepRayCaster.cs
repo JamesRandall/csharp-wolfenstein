@@ -21,20 +21,20 @@ public class StepRayCaster : AbstractRayCaster
     {
         _result = null;
     }
-    
-    public void Start(RayCastParameters parameters)
+
+    private void Start(RayCastParameters parameters)
     {
         var (initialMapX, initialMapY) = parameters.From.ToMap();
-        var deltaDistX = parameters.Direction.x == 0.0 ? double.MaxValue : Math.Abs(1.0 / parameters.Direction.x);
-        var deltaDistY = parameters.Direction.y == 0.0 ? double.MaxValue : Math.Abs(1.0 / parameters.Direction.y);
+        var deltaDistX = parameters.Direction.X == 0.0 ? double.MaxValue : Math.Abs(1.0 / parameters.Direction.X);
+        var deltaDistY = parameters.Direction.Y == 0.0 ? double.MaxValue : Math.Abs(1.0 / parameters.Direction.Y);
         var initialSideDistX =
-            parameters.Direction.x < 0.0
-                ? (parameters.From.x - initialMapX) * deltaDistX
-                : (initialMapX + 1.0 - parameters.From.x) * deltaDistX;
+            parameters.Direction.X < 0.0
+                ? (parameters.From.X - initialMapX) * deltaDistX
+                : (initialMapX + 1.0 - parameters.From.X) * deltaDistX;
         var initialSideDistY =
-            parameters.Direction.y < 0.0
-                ? (parameters.From.y - initialMapY) * deltaDistY
-                : (initialMapY + 1.0 - parameters.From.y) *deltaDistY;
+            parameters.Direction.Y < 0.0
+                ? (parameters.From.Y - initialMapY) * deltaDistY
+                : (initialMapY + 1.0 - parameters.From.Y) *deltaDistY;
         
         _result = new TrackingRayCastResult(
             IsComplete: false,
@@ -53,22 +53,9 @@ public class StepRayCaster : AbstractRayCaster
         Func<RayCastResult, bool> shouldContinueFunc)
     {
         if (_result == null) Start(parameters);
-        //if (!_canStep) return _result!;
         
-        var (initialMapX, initialMapY) = parameters.From.ToMap();
-        
-        var halfStepDeltaDistX =
-            parameters.Direction.x == 0.0
-                ? double.MaxValue
-                : Math.Sqrt(1.0 + parameters.Direction.y * parameters.Direction.y / parameters.Direction.x *
-                    parameters.Direction.x);
-        var halfStepDeltaDistY =
-            parameters.Direction.y == 0.0
-                ? double.MaxValue
-                : Math.Sqrt(1.0 + parameters.Direction.x * parameters.Direction.x / parameters.Direction.y *
-                    parameters.Direction.y);
-        var stepX = parameters.Direction.x < 0.0 ? -1 : 1;
-        var stepY = parameters.Direction.y < 0.0 ? -1 : 1;
+        var stepX = parameters.Direction.X < 0.0 ? -1 : 1;
+        var stepY = parameters.Direction.Y < 0.0 ? -1 : 1;
         
         if (shouldContinueFunc(_result!))
         {
@@ -83,7 +70,6 @@ public class StepRayCaster : AbstractRayCaster
                 Empty => false,
                 Wall => true,
                 Door door => IsDoorHit(
-                    (halfStepDeltaDistX,halfStepDeltaDistY),
                     (stepX,stepY),
                     parameters,
                     (newMapX,newMapY),

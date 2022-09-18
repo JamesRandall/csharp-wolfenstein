@@ -9,26 +9,16 @@ public class RayCaster : AbstractRayCaster
         Func<RayCastResult, bool> shouldContinueFunc)
     {
         var (initialMapX, initialMapY) = parameters.From.ToMap();
-        var deltaDistX = parameters.Direction.x == 0.0 ? double.MaxValue : Math.Abs(1.0 / parameters.Direction.x);
-        var deltaDistY = parameters.Direction.y == 0.0 ? double.MaxValue : Math.Abs(1.0 / parameters.Direction.y);
-        var halfStepDeltaDistX =
-            parameters.Direction.x == 0.0
-                ? double.MaxValue
-                : Math.Sqrt(1.0 + parameters.Direction.y * parameters.Direction.y / parameters.Direction.x *
-                    parameters.Direction.x);
-        var halfStepDeltaDistY =
-            parameters.Direction.y == 0.0
-                ? double.MaxValue
-                : Math.Sqrt(1.0 + parameters.Direction.x * parameters.Direction.x / parameters.Direction.y *
-                    parameters.Direction.y);
+        var deltaDistX = parameters.Direction.X == 0.0 ? double.MaxValue : Math.Abs(1.0 / parameters.Direction.X);
+        var deltaDistY = parameters.Direction.Y == 0.0 ? double.MaxValue : Math.Abs(1.0 / parameters.Direction.Y);
         var (stepX, initialSideDistX) =
-            parameters.Direction.x < 0.0
-                ? (-1, (parameters.From.x - initialMapX) * deltaDistX)
-                : (1, (initialMapX + 1.0 - parameters.From.x) * deltaDistX);
+            parameters.Direction.X < 0.0
+                ? (-1, (parameters.From.X - initialMapX) * deltaDistX)
+                : (1, (initialMapX + 1.0 - parameters.From.X) * deltaDistX);
         var (stepY, initialSideDistY) =
-            parameters.Direction.y < 0.0
-                ? (-1, (parameters.From.y - initialMapY) * deltaDistY)
-                : (1, (initialMapY + 1.0 - parameters.From.y) * deltaDistY);
+            parameters.Direction.Y < 0.0
+                ? (-1, (parameters.From.Y - initialMapY) * deltaDistY)
+                : (1, (initialMapY + 1.0 - parameters.From.Y) * deltaDistY);
         
         // TODO: the use of raycastresult like this is a dogs dinner at the moment but will get things going for now
         var result = new RayCastResult(
@@ -51,7 +41,6 @@ public class RayCaster : AbstractRayCaster
                 Empty => false,
                 Wall => true,
                 Door door => IsDoorHit(
-                    (halfStepDeltaDistX,halfStepDeltaDistY),
                     (stepX,stepY),
                     parameters,
                     (newMapX,newMapY),

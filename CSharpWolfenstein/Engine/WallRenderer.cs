@@ -1,4 +1,5 @@
 using CSharpWolfenstein.Assets;
+using CSharpWolfenstein.Engine.RayCasting;
 using CSharpWolfenstein.Extensions;
 using CSharpWolfenstein.Game;
 
@@ -44,8 +45,8 @@ public static class WallRenderer
         {
             var baseParameters = new RayCastParameters(
                 IncludeTurningPoints: false,
-                From: (game.Camera.Position.X, game.Camera.Position.Y),
-                Direction: (0.0, 0.0)
+                From: new (game.Camera.Position.X, game.Camera.Position.Y),
+                Direction: new (0.0, 0.0)
             );
             fixed (uint* destPtr = buffer)
             {
@@ -54,7 +55,7 @@ public static class WallRenderer
                 for (int viewportX = startViewportX; viewportX < endViewportX; viewportX++)
                 {
                     var cameraX = 2.0 * viewportX / viewportSize.width - 1.0;
-                    (double x, double y) rayDirection = (
+                    var rayDirection = new Vector2D(
                         game.Camera.Direction.X + game.Camera.Plane.X * cameraX,
                         game.Camera.Direction.Y + game.Camera.Plane.Y * cameraX
                     );
@@ -79,14 +80,14 @@ public static class WallRenderer
                         {
                             var wallX =
                                 rayCastResult.Side == Side.NorthSouth
-                                    ? game.Camera.Position.Y + perpendicularWallDistance * rayDirection.y
-                                    : game.Camera.Position.X + perpendicularWallDistance * rayDirection.x;
+                                    ? game.Camera.Position.Y + perpendicularWallDistance * rayDirection.Y
+                                    : game.Camera.Position.X + perpendicularWallDistance * rayDirection.X;
                             var clampedWallX = wallX - Math.Floor(wallX);
                             var rawTextureX = (int) (clampedWallX * Constants.TextureWidth);
                             var (textureX, textureIndex) =
-                                rayCastResult.Side == Side.NorthSouth && rayDirection.x > 0.0
+                                rayCastResult.Side == Side.NorthSouth && rayDirection.X > 0.0
                                     ? (Constants.TextureWidth - rawTextureX - 1.0, wall.NorthSouthTextureIndex)
-                                    : rayCastResult.Side == Side.EastWest && rayDirection.y < 0.0
+                                    : rayCastResult.Side == Side.EastWest && rayDirection.Y < 0.0
                                         ? (Constants.TextureWidth - rawTextureX - 1.0, wall.EastWestTextureIndex)
                                         : ((double) rawTextureX, wall.TextureIndex(rayCastResult.Side));
 
@@ -97,8 +98,8 @@ public static class WallRenderer
                             var door = game.Doors[doorCell.DoorIndex];
 
                             var wallX = rayCastResult.Side == Side.NorthSouth
-                                ? game.Camera.Position.Y + perpendicularWallDistance * rayDirection.y
-                                : game.Camera.Position.X + perpendicularWallDistance * rayDirection.x;
+                                ? game.Camera.Position.Y + perpendicularWallDistance * rayDirection.Y
+                                : game.Camera.Position.X + perpendicularWallDistance * rayDirection.X;
                             var clampedWallX = wallX - Math.Floor(wallX);
                             var rawTextureX = (int) (clampedWallX * Constants.TextureWidth);
                             var textureX = Math.Max(0.0, Constants.TextureWidth - rawTextureX - 1.0 - door.Offset);

@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using CSharpWolfenstein.Assets;
+using CSharpWolfenstein.Engine.RayCasting;
 using CSharpWolfenstein.Extensions;
 using CSharpWolfenstein.Game;
 

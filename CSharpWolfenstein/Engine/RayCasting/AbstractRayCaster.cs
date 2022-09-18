@@ -1,11 +1,11 @@
 using CSharpWolfenstein.Game;
 
-namespace CSharpWolfenstein.Engine;
+namespace CSharpWolfenstein.Engine.RayCasting;
 
 public record RayCastParameters(
     bool IncludeTurningPoints,
-    (double x, double y) From,
-    (double x, double y) Direction
+    Vector2D From,
+    Vector2D Direction
 );
 
 public record RayCastResult(
@@ -22,25 +22,36 @@ public abstract class AbstractRayCaster
         Func<RayCastResult, bool> shouldContinueFunc);
     
     protected static bool IsDoorHit(
-        (double x, double y) halfStepDelta,
         (int x, int y) stepDelta,
         RayCastParameters parameters,
         (int x, int y) newMap,
         Side newSide,
         DoorState door)
     {
+        var halfStepDeltaX =
+            parameters.Direction.X == 0.0
+                ? double.MaxValue
+                : Math.Sqrt(1.0 + parameters.Direction.Y * parameters.Direction.Y / parameters.Direction.X *
+                    parameters.Direction.X);
+        var halfStepDeltaY =
+            parameters.Direction.Y == 0.0
+                ? double.MaxValue
+                : Math.Sqrt(1.0 + parameters.Direction.X * parameters.Direction.X / parameters.Direction.Y *
+                    parameters.Direction.Y);
+        
         const double tolerance = 0.0001;
         var (posX, posY) = parameters.From;
         var mapX2 = posX < newMap.x ? newMap.x - 1 : newMap.x;
         var mapY2 = posY > newMap.y ? newMap.y + 1 : newMap.y;
-        var adjacent = newSide == Side.EastWest ? (double) mapY2 - posY : (double) mapX2 - posX + 1.0;
+        var adjacent = newSide == Side.EastWest ? mapY2 - posY : mapX2 - posX + 1.0;
         var rayMultiplier = newSide == Side.EastWest
-            ? adjacent / parameters.Direction.y
-            : adjacent / parameters.Direction.x;
+            ? adjacent / parameters.Direction.Y
+            : adjacent / parameters.Direction.X;
         var (rayPositionX, rayPositionY) =
-            (posX + parameters.Direction.x * rayMultiplier, posY + parameters.Direction.y * rayMultiplier);
-        var trueDeltaX = halfStepDelta.x < tolerance ? 100.0 : halfStepDelta.x;
-        var trueDeltaY = halfStepDelta.y < tolerance ? 100.0 : halfStepDelta.y;
+            (posX + parameters.Direction.X * rayMultiplier, posY + parameters.Direction.Y * rayMultiplier);
+        var trueDeltaX = halfStepDeltaX < tolerance ? 100.0 : halfStepDeltaX;
+        var trueDeltaY = halfStepDeltaY < tolerance ? 100.0 : halfStepDeltaY;
+        
 
         if (newSide == Side.NorthSouth)
         {
