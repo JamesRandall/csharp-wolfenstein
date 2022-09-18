@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using CSharpWolfenstein.Assets;
 using CSharpWolfenstein.Engine.RayCasting;
 using CSharpWolfenstein.Extensions;
@@ -34,11 +35,11 @@ public static class WallRenderer
             }
         }
 
-        var initialWallRenderResult = new WallRenderingResult(
-            ZIndexes: Array.Empty<double>(),
+        var wallRenderResult = new WallRenderingResult(
+            ZIndexes: ImmutableArray<double>.Empty,
             WallInFrontOfPlayer: (-1, -1),
             IsDoorInFrontOfPlayer: false,
-            DistanceToWallInFrontOfPlayer: -1,
+            DistanceToWallInFrontOfPlayer: -1.0,
             SpriteInFrontOfPlayerIndexOption: Option<int>.None);
 
         unsafe
@@ -76,7 +77,8 @@ public static class WallRenderer
                         var startY = Math.Max(-lineHeight / 2.0 + viewportSize.height / 2.0, 0.0);
                         var endY = Math.Min(lineHeight / 2.0 + viewportSize.height / 2.0, viewportSize.height - 1.0);
 
-                        if (game.Map[rayCastResult.MapHit.y][rayCastResult.MapHit.x] is Wall wall)
+                        var cellHit = game.Map[rayCastResult.MapHit.y][rayCastResult.MapHit.x];
+                        if (cellHit is Wall wall)
                         {
                             var wallX =
                                 rayCastResult.Side == Side.NorthSouth
@@ -89,11 +91,11 @@ public static class WallRenderer
                                     ? (Constants.TextureWidth - rawTextureX - 1.0, wall.NorthSouthTextureIndex)
                                     : rayCastResult.Side == Side.EastWest && rayDirection.Y < 0.0
                                         ? (Constants.TextureWidth - rawTextureX - 1.0, wall.EastWestTextureIndex)
-                                        : ((double) rawTextureX, wall.TextureIndex(rayCastResult.Side));
+                                        : (rawTextureX, wall.TextureIndex(rayCastResult.Side));
 
                             RenderTextureColumn(lineHeight, startY, textureIndex, endY, textureX, destPtr, viewportX);
                         }
-                        else if (game.Map[rayCastResult.MapHit.y][rayCastResult.MapHit.x] is Door doorCell)
+                        else if (cellHit is Door doorCell)
                         {
                             var door = game.Doors[doorCell.DoorIndex];
 
@@ -107,11 +109,33 @@ public static class WallRenderer
 
                             RenderTextureColumn(lineHeight, startY, textureIndex, endY, textureX, destPtr, viewportX);
                         }
+
+                        // Here we build up our z-index buffer that lets us clip sprites in a later rendering phase
+                        // We also gather up some information about what is in front of the player that we will use
+                        // later during game logic. We could cast another ray at that time, which might make for neater
+                        // code, but doing this here saves us the expense of another cast. Probably not much in it but
+                        // there you go...
+                        wallRenderResult = wallRenderResult with
+                        {
+                            ZIndexes = wallRenderResult.ZIndexes.Add(perpendicularWallDistance),
+                            WallInFrontOfPlayer =
+                                viewportX == viewportSize.width/2
+                                    ? (rayCastResult.MapHit.x,rayCastResult.MapHit.y)
+                                    : wallRenderResult.WallInFrontOfPlayer,
+                            DistanceToWallInFrontOfPlayer = 
+                                viewportX == viewportSize.width/2
+                                    ? perpendicularWallDistance
+                                    : wallRenderResult.DistanceToWallInFrontOfPlayer,
+                            IsDoorInFrontOfPlayer =
+                                viewportX == viewportSize.width/2
+                                    ? cellHit switch { Door => true, _ => false }
+                                    : wallRenderResult.IsDoorInFrontOfPlayer
+                        };
                     }
                 }
             }
         }
 
-        return initialWallRenderResult;
+        return wallRenderResult;
     }
 }

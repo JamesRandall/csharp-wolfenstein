@@ -3,6 +3,7 @@
  * My expectation is that I iterate on this as I get further into the project... its a starting point for now.
  */
 
+using System.Collections.Immutable;
 using System.Numerics;
 using CSharpWolfenstein.Assets;
 using CSharpWolfenstein.Engine;
@@ -184,10 +185,10 @@ public enum Side
 }
 
 public record WallRenderingResult(
-    IReadOnlyCollection<double> ZIndexes,
+    ImmutableArray<double> ZIndexes,
     (int x, int y) WallInFrontOfPlayer,
     bool IsDoorInFrontOfPlayer,
-    int DistanceToWallInFrontOfPlayer,
+    double DistanceToWallInFrontOfPlayer,
     // Going to see what its like using an option type in C#. null makes me nauseaus.
     Option<int> SpriteInFrontOfPlayerIndexOption
 );
@@ -363,12 +364,12 @@ public record EnemyProperties(
     double ChaseSpeed
 );
 
-public abstract record AbstractGameObject;
+public abstract record AbstractGameObject(BasicGameObjectProperties CommonProperties);
 
-public record StaticGameObject(BasicGameObjectProperties CommonProperties) : AbstractGameObject;
+public record StaticGameObject(BasicGameObjectProperties CommonProperties) : AbstractGameObject(CommonProperties);
 
 public record EnemyGameObject(BasicGameObjectProperties CommonProperties, EnemyProperties EnemyProperties)
-    : AbstractGameObject
+    : AbstractGameObject(CommonProperties)
 {
     public Vector2D DirectionVector => EnemyProperties.Direction.ToVector();
     public int StationarySpriteBlockIndex => CommonProperties.SpriteIndex;

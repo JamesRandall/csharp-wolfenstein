@@ -1,4 +1,5 @@
 using System.Numerics;
+using CSharpWolfenstein.Extensions;
 using CSharpWolfenstein.Game;
 
 namespace CSharpWolfenstein.Engine
@@ -44,10 +45,13 @@ namespace CSharpWolfenstein.Engine
             {
                 var newMapX = (int) (posX + dirX * speed);
                 var newMapY = (int) (posY + dirY * speed);
-                var newPosition = input.Camera.Position with {
-                    X = (float) (posX + (dirX * speed)),
-                    Y = (float) (posY + (dirY * speed))
-                };
+                
+                // By checking if you can move into new x and y cells independently we get the "slide along the walls"
+                // effect from the original game. Otherwise you would stop dead which would feel very weird indeed.
+                var newPosition = new Vector2D(
+                    X: input.CanPlayerTraverse((newMapX, (int)posY)) ? (float) (posX + (dirX * speed)) : posX,
+                    Y: input.CanPlayerTraverse(((int) posX, newMapY)) ? (float) (posY + (dirY * speed)) : posY
+                );
                 return input with { Camera = input.Camera with { Position = newPosition}};
             }
 

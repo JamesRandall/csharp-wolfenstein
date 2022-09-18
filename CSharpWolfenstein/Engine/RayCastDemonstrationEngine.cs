@@ -11,7 +11,7 @@ public class RayCastDemonstrationEngine : AbstractGameEngine
 {
     private const double StepDistanceSpeed = 250.0;
     private const int StartingStripToDraw = 0;
-    const int GridSize = 32;
+    private int GridSize = 32;
     private ViewportRenderer _viewportRenderer;
     private double _speed;
     private double _timeUntilNextStep;
@@ -118,7 +118,7 @@ public class RayCastDemonstrationEngine : AbstractGameEngine
         }
         
         _timeUntilNextStep -= delta;
-        if (_timeUntilNextStep < 0.0)
+        if (_timeUntilNextStep <= 0.0)
         {
             _timeUntilNextStep += _speed;
             StepRayCaster? stepRayCaster = _viewportRenderer.RayCaster as StepRayCaster;
@@ -144,7 +144,8 @@ public class RayCastDemonstrationEngine : AbstractGameEngine
                         movedToNextRay = true;
                     }
                 }
-                
+
+                if (_stripToDraw >= Constants.WolfViewportWidth) return;
                 
                 {
                     unsafe
@@ -337,11 +338,7 @@ public class RayCastDemonstrationEngine : AbstractGameEngine
                     : new ViewportRenderer(WallRenderer.RenderWalls, new RayCaster());
             _timeUntilNextStep = _speed = _viewportRenderer.RayCaster is StepRayCaster ? StepDistanceSpeed : 0.0;
         }
-    }
-
-    public override void OnKeyUp(ControlState controlState)
-    {
-        if (controlState == ControlState.Forward)
+        else if (controlState == ControlState.Forward)
         {
             _speed -= 50.0;
             if (_speed <= 0.0) _speed = 0.0;
@@ -350,5 +347,18 @@ public class RayCastDemonstrationEngine : AbstractGameEngine
         {
             _speed += 50.0;
         }
+        else if (controlState == ControlState.TurningLeft && GridSize > 8)
+        {
+            GridSize = GridSize / 2;
+        }
+        else if (controlState == ControlState.TurningRight && GridSize < 128)
+        {
+            GridSize = GridSize * 2;
+        }
+    }
+
+    public override void OnKeyUp(ControlState controlState)
+    {
+        
     }
 }
