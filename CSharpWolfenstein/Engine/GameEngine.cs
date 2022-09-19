@@ -42,20 +42,23 @@ public class GameEngine : AbstractGameEngine
     public override void NewFrame(SKPaintSurfaceEventArgs e)
     {
         var (delta,fps) = _frameTimer.GetCurrentTimings();
-        Render(e, fps);
-        _game = _game.Update(delta);
+        var wallRenderingResult = Render(e, fps);
+        _game = _game.Update(delta, wallRenderingResult);
     }
     
-    private void Render(SKPaintSurfaceEventArgs e, double fps)
+    private WallRenderingResult Render(SKPaintSurfaceEventArgs e, double fps)
     {
         var canvas = e.Surface.Canvas;
         canvas.Clear(new SKColor(0x00,0x40,0x40));
+        var (buffer, wallRenderingResult) =
+            _viewportRenderer.UpdateFrameBuffer(_assetPack, _game,
+                (Constants.WolfViewportWidth, Constants.WolfViewportHeight));
         unsafe
         {
             // Their is a good article on the different ways to update pixel data here:
             //  https://docs.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/graphics/skiasharp/bitmaps/pixel-bits
             // Having tried them all maintaining and then setting the pixel byte array is the most performant for us.
-            fixed (uint* ptr = _viewportRenderer.UpdateFrameBuffer(_assetPack, _game, (Constants.WolfViewportWidth,Constants.WolfViewportHeight)))
+            fixed (uint* ptr = buffer)
             {
                 _bitmap.SetPixels((IntPtr)ptr);
             }
@@ -88,6 +91,7 @@ public class GameEngine : AbstractGameEngine
 
         var surfaceSize = e.Info.Size;
         canvas.DrawText($"{fps:0.00}fps", surfaceSize.Width / 2f, surfaceSize.Height - 10f, paint);
+        return wallRenderingResult;
     }
     
     public override void OnKeyDown(ControlState controlState)

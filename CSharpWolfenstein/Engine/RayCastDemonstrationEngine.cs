@@ -146,12 +146,13 @@ public class RayCastDemonstrationEngine : AbstractGameEngine
                 }
 
                 if (_stripToDraw >= Constants.WolfViewportWidth) return;
-                
+
                 {
+                    var (buffer, _) = _viewportRenderer.UpdateFrameBuffer(AssetPack, GameState,
+                        (Constants.WolfViewportWidth, Constants.WolfViewportHeight), _stripToDraw);
                     unsafe
                     {
-                        fixed (uint* ptr = _viewportRenderer.UpdateFrameBuffer(AssetPack, GameState,
-                                   (Constants.WolfViewportWidth, Constants.WolfViewportHeight), _stripToDraw))
+                        fixed (uint* ptr = buffer)
                         {
                             _bitmap.SetPixels((IntPtr) ptr);
                         }

@@ -6,7 +6,7 @@ public static class LinqExtensions
     {
         return await Task.WhenAll(enumerable);
     }
-    
+
     public static async Task<T[]> ToArrayAsync<T>(this IEnumerable<Task<T>> enumerable)
     {
         return await Task.WhenAll(enumerable);

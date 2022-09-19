@@ -22,10 +22,10 @@ public class ViewportRenderer
 
     public AbstractRayCaster RayCaster => _rayCaster;
 
-    public uint[] UpdateFrameBuffer(AssetPack assetPack, GameState game, (int width, int height) viewportSize, int? stripToDraw=null)
+    public (uint[],WallRenderingResult) UpdateFrameBuffer(AssetPack assetPack, GameState game, (int width, int height) viewportSize, int? stripToDraw=null)
     {
         uint[] buffer = new uint[viewportSize.height * viewportSize.width];
-        _wallRenderer(buffer, assetPack, game, viewportSize, _rayCaster, stripToDraw);
-        return buffer;
+        var renderingResult = _wallRenderer(buffer, assetPack, game, viewportSize, _rayCaster, stripToDraw);
+        return (buffer,renderingResult);
     }
 }
