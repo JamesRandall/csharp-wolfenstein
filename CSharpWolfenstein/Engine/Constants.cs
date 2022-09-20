@@ -11,5 +11,5 @@ public static class Constants
     public const int WolfViewportWidth = 304 * WolfViewportZoom;
     public const int WolfViewportHeight = 152 * WolfViewportZoom;
 
-
+    public const int FiringTolerance = 40;
 }

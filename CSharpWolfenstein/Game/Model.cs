@@ -145,19 +145,19 @@ public static class MapDirectionExtensions
         };
     }
 
-    public static Vector2D ToVector(this MapDirection direction)
+    public static Option<Vector2D> ToVector(this MapDirection direction)
     {
         return direction switch
         {
-            MapDirection.North => Direction.North,
-            MapDirection.NorthEast => Direction.NorthEast,
-            MapDirection.East => Direction.East,
-            MapDirection.SouthEast => Direction.SouthEast,
-            MapDirection.South => Direction.South,
-            MapDirection.SouthWest => Direction.SouthWest,
-            MapDirection.West => Direction.West,
-            MapDirection.NorthWest => Direction.NorthWest,
-            _ => Direction.None
+            MapDirection.North => Option<Vector2D>.Some(Direction.North),
+            MapDirection.NorthEast => Option<Vector2D>.Some(Direction.NorthEast),
+            MapDirection.East => Option<Vector2D>.Some(Direction.East),
+            MapDirection.SouthEast => Option<Vector2D>.Some(Direction.SouthEast),
+            MapDirection.South => Option<Vector2D>.Some(Direction.South),
+            MapDirection.SouthWest => Option<Vector2D>.Some(Direction.SouthWest),
+            MapDirection.West => Option<Vector2D>.Some(Direction.West),
+            MapDirection.NorthWest => Option<Vector2D>.Some(Direction.NorthWest),
+            _ => Option<Vector2D>.None
         };
     }
 
@@ -371,16 +371,28 @@ public record StaticGameObject(BasicGameObjectProperties CommonProperties) : Abs
 public record EnemyGameObject(BasicGameObjectProperties CommonProperties, EnemyProperties EnemyProperties)
     : AbstractGameObject(CommonProperties)
 {
-    public Vector2D DirectionVector => EnemyProperties.Direction.ToVector();
+    public Option<Vector2D> DirectionVector => EnemyProperties.Direction.ToVector();
     public int StationarySpriteBlockIndex => CommonProperties.SpriteIndex;
     public int NumberOfMovementAnimationFrames => EnemyProperties.SpriteBlocks - 1;
 
     public int MovementSpriteBlockIndex(int frame)
     {
-        return (CommonProperties.SpriteIndex + frame) * EnemyProperties.FramesPerBlock;
+        return CommonProperties.SpriteIndex + frame * EnemyProperties.FramesPerBlock;
     }
 
-    public bool IsAlive => EnemyProperties.State.Value is EnemyState.Type.Dead or EnemyState.Type.Die;
+    public bool IsAlive =>
+        EnemyProperties.State.Match(
+            _ => true,
+            _ => true,
+            _ => true,
+            _ => true,
+            _ => true,
+            _ => true,
+            _ => false,
+            _ => false,
+            _ => true
+        );
+    //EnemyProperties.State.Value is EnemyState.Type.Dead or EnemyState.Type.Die;
 
     public int BaseSpriteIndexForState =>
         EnemyProperties.State.Value switch

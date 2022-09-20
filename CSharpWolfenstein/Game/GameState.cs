@@ -32,7 +32,9 @@ public record GameState(
             Map: level.Map,
             Areas: new int[0, 0],
             CompositeAreas: ImmutableArray<CompositeArea>.Empty,
-            GameObjects: ImmutableArray<AbstractGameObject>.Empty,
+            // can be useful to only include a single object when debugging
+            // level.AbstractGameObjects.Where(x => x.CommonProperties.Position == new Vector2D(31.5,57.5)).ToImmutableArray(),
+            GameObjects: level.AbstractGameObjects, 
             Player: Player.NewPlayer(assetPack),
             Camera: level.PlayerStartingPosition,
             ControlState: ControlState.None,

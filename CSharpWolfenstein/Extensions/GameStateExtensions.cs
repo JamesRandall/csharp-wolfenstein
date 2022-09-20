@@ -14,7 +14,8 @@ public static class GameStateExtensions
             Wall _ => false,
             _ => true
         };
-        if (canPassCell) return !input.GameObjects.Any(go => go.CommonProperties.MapPosition == toPosition);
+        if (canPassCell)
+            return !input.GameObjects.Any(go => go.CommonProperties.MapPosition == toPosition && go.CommonProperties.Blocking);
         return false;
     }
     

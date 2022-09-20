@@ -26,6 +26,7 @@ public class ViewportRenderer
     {
         uint[] buffer = new uint[viewportSize.height * viewportSize.width];
         var renderingResult = _wallRenderer(buffer, assetPack, game, viewportSize, _rayCaster, stripToDraw);
+        ObjectRenderer.RenderSpriteObjects(buffer, viewportSize, assetPack, game, renderingResult);
         return (buffer,renderingResult);
     }
 }
