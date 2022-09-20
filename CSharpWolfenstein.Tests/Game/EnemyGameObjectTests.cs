@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Numerics;
 
 namespace CSharpWolfenstein.Tests.Game;
@@ -22,8 +23,8 @@ public class EnemyGameObjectTests
             new EnemyProperties(
                 EnemyType.Guard,
                 MapDirection.North,
-                new[] {0, 1, 2},
-                new[] {0, 1, 2},
+                ImmutableArray.Create(new[] {0, 1, 2}),
+                ImmutableArray.Create(new[] {0, 1, 2}),
                 1,
                 8,
                 0,
@@ -44,7 +45,7 @@ public class EnemyGameObjectTests
     {
         var enemy = BasicGuard;
         var standingEnemy = enemy with {EnemyProperties = enemy.EnemyProperties with { State = EnemyState.Standing}};
-        Assert.Equal(0.0f, standingEnemy.AnimationTimeForState);
+        Assert.Equal(0.0f, standingEnemy.AnimationTime);
     }
     
     [Fact]
@@ -52,6 +53,6 @@ public class EnemyGameObjectTests
     {
         var enemy = BasicGuard;
         var chasingEnemy = enemy with {EnemyProperties = enemy.EnemyProperties with { State = EnemyState.Chase((0,0)) } };
-        Assert.Equal(100.0f, chasingEnemy.AnimationTimeForState);
+        Assert.Equal(100.0f, chasingEnemy.AnimationTime);
     }
 }

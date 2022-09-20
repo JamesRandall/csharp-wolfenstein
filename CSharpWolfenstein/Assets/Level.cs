@@ -285,6 +285,7 @@ namespace CSharpWolfenstein.Assets
             var plane0 = assetPack.GameMaps[plane0Start..plane0End].CarmackDecode().RlewDecode(assetPack.MapHeader);
             var plane1 = assetPack.GameMaps[plane1Start..plane1End].CarmackDecode().RlewDecode(assetPack.MapHeader);
             var (cells, doors) = ConstructMapLayout(plane0, plane1);
+            var gameObjects = GameObjectFactory.Create(difficulty, plane0, plane1);
 
             return new Level(
                 Width: mapSize,
@@ -292,7 +293,7 @@ namespace CSharpWolfenstein.Assets
                 Map: cells.PatchWallsSurroundingDoors(doors), //.FlipHorizontal(),
                 Areas: new int [0, 0],
                 NumberOfAreas: 0,
-                AbstractGameObjects: ImmutableArray<AbstractGameObject>.Empty,
+                AbstractGameObjects: gameObjects,
                 PlayerStartingPosition: GetStartingPosition(plane1),
                 Doors: doors.ToArray()  // .Select(x => x with { MapPosition = x.MapPosition.FlipHorizontal()}).ToArray());
             );

@@ -342,14 +342,14 @@ public record BasicGameObjectProperties(
     bool Blocking
 )
 {
-    public (int, int) MapPosition => ((int) Position.X, (int) Position.Y);
+    public (int x, int y) MapPosition => ((int) Position.X, (int) Position.Y);
 }
 
 public record EnemyProperties(
     EnemyType EnemyType,
     MapDirection Direction,
-    int[] DeathSpriteIndexes,
-    int[] AttackSpriteIndexes,
+    ImmutableArray<int> DeathSpriteIndexes,
+    ImmutableArray<int> AttackSpriteIndexes,
     int SpriteBlocks,
     int FramesPerBlock,
     int CurrentAnimationFrame,
@@ -393,8 +393,8 @@ public record EnemyGameObject(BasicGameObjectProperties CommonProperties, EnemyP
             _ => CommonProperties.SpriteIndex
         };
 
-    public double AnimationTimeForState =>
-        EnemyProperties.State.Value switch
+    public static double AnimationTimeForState(EnemyState state) =>
+        state.Value switch
         {
             EnemyState.Type.Attack => 200.0,
             EnemyState.Type.Chase => 100.0,
@@ -403,6 +403,8 @@ public record EnemyGameObject(BasicGameObjectProperties CommonProperties, EnemyP
             EnemyState.Type.Dead or EnemyState.Type.Dead => 100.0,
             _ => 0.0
         };
+
+    public double AnimationTime => AnimationTimeForState(EnemyProperties.State);
 
     public int SpriteIndexForAnimationFrame =>
         EnemyProperties.State.Value switch
@@ -537,6 +539,7 @@ public record StatusBarGraphics(
 // TODO: These almost certainly belong somewhere else
 public static class Constants
 {
+    public const int MapSize = 64; 
     public const double TextureWidth = 64.0;
     public const double TextureHeight = 64.0;
     public const int FiringTolerance = 40;
