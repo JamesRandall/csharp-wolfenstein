@@ -373,17 +373,22 @@ namespace CSharpWolfenstein.Assets
                     return gameObjects;
                 })
                 .Select(ago =>
+                    // patch in the ambush or path state if required
                     ago switch
                     {
                         EnemyGameObject ego => ego with
                         {
                             EnemyProperties = ego.EnemyProperties with
                             {
-                                State = EnemyState.Path(new PathState(
-                                  ego.CommonProperties.MapPosition.x + ego.EnemyProperties.Direction.ToDelta().x,
-                                  ego.CommonProperties.MapPosition.y + ego.EnemyProperties.Direction.ToDelta().y,
-                                  false
-                                ))
+                                State =
+                                    GetPlaneValue(plane0, ego.CommonProperties.MapPosition) == ambushingValue
+                                    ? EnemyState.Ambushing
+                                    : ego.EnemyProperties.State.Value is EnemyState.Type.Path 
+                                        ? EnemyState.Path(new PathState(
+                                            ego.CommonProperties.MapPosition.x + ego.EnemyProperties.Direction.ToDelta().x, 
+                                            ego.CommonProperties.MapPosition.y + ego.EnemyProperties.Direction.ToDelta().y, 
+                                            false))
+                                        : ego.EnemyProperties.State
                             }
                         },
                         _ => ago
