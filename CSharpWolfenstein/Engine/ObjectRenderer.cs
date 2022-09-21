@@ -16,19 +16,24 @@ public static class ObjectRenderer
             return ego.DirectionVector.Match(
                 directionVector =>
                 {
+                    var trigCompatibleDirectionVector = directionVector with {Y = directionVector.Y * -1};
                     const int spriteQuadrants = 8;
                     var quadrantSize = (360.0 / spriteQuadrants).ToRadians();
-                    var playerRelativePosition = (game.Camera.Position - ego.CommonProperties.Position).Normalize();
+                    var playerRelativePosition =
+                        new Vector2D(
+                            game.Camera.Position.X - ego.CommonProperties.Position.X,
+                            ego.CommonProperties.Position.Y - game.Camera.Position.Y).Normalize();
+                        (ego.CommonProperties.Position - game.Camera.Position).Normalize();
                     var vectors = Enumerable
                         .Range(0, spriteQuadrants)
-                        .Select((quadrant,index) =>
+                        .Select(quadrant =>
                             {
                                 var centerAngle = quadrant * quadrantSize;
                                 var startAngle = centerAngle - quadrantSize / 2.0;
                                 var endAngle = centerAngle + quadrantSize / 2.0;
-                                var startVector = directionVector.Rotate(startAngle);
-                                var endVector = directionVector.Rotate(endAngle);
-                                return (index, startVector, endVector);
+                                var startVector = trigCompatibleDirectionVector.Rotate(startAngle);
+                                var endVector = trigCompatibleDirectionVector.Rotate(endAngle);
+                                return (quadrant, startVector, endVector);
                             }
                         )
                         .ToImmutableArray();
@@ -39,7 +44,7 @@ public static class ObjectRenderer
                     var p1 = Vector2D.Zero;
                     var quadrantIndex =
                         vectors.FirstOrDefault(pair =>
-                            Barycentric.IsPointInTriangle(p1, pair.startVector, pair.endVector, playerTestPoint)).index;
+                            Barycentric.IsPointInTriangle(p1, pair.startVector, pair.endVector, playerTestPoint)).quadrant;
                     return ego.BaseSpriteIndexForState + quadrantIndex;
                 },
                 _ => ego.BaseSpriteIndexForState

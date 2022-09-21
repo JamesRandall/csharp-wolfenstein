@@ -203,6 +203,14 @@ namespace CSharpWolfenstein.Engine
             return input;
         }
 
+        private static GameState SortGameObjectsByDistance((GameState input, double delta) args) =>
+            args.input with
+            {
+                GameObjects = args.input.GameObjects.OrderByDescending(go =>
+                    (go.CommonProperties.Position - args.input.Camera.Position).Magnitude()
+                ).ToImmutableArray()
+            };
+
 
         public static GameState Update(this GameState game, double delta, WallRenderingResult wallRenderingResult)
         {
@@ -219,7 +227,8 @@ namespace CSharpWolfenstein.Engine
                     g => g.KeyPressed(ControlState.TurningRight) ? Rotate(g, 1.0) : g.gameState,
                     g => g.KeyPressed(ControlState.Action) ? DoAction(g, wallRenderingResult) : g.gameState,
                     // Doors and game objects
-                    UpdateTransitioningDoors
+                    UpdateTransitioningDoors,
+                    SortGameObjectsByDistance
                 }.Update(game, delta);
         }
     }
