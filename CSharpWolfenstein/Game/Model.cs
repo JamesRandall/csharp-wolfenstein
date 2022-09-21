@@ -397,7 +397,7 @@ public record EnemyGameObject(BasicGameObjectProperties CommonProperties, EnemyP
     public int BaseSpriteIndexForState =>
         EnemyProperties.State.Value switch
         {
-            EnemyState.Type.Standing => 0,
+            EnemyState.Type.Standing => StationarySpriteBlockIndex,
             EnemyState.Type.Chase or EnemyState.Type.Path => MovementSpriteBlockIndex(EnemyProperties
                 .CurrentAnimationFrame),
             EnemyState.Type.Attack => EnemyProperties.AttackSpriteIndexes[EnemyProperties.CurrentAnimationFrame],
