@@ -19,7 +19,7 @@ public record Vector2D(double X, double Y)
     public static Vector2D operator +(Vector2D a, Vector2D b) => new Vector2D(a.X + b.X, a.Y + b.Y);
     public static Vector2D operator *(Vector2D a, double b) => new Vector2D(a.X * b, a.Y * b);
     public static Vector2D operator /(Vector2D a, double b) => new Vector2D(a.X / b, a.Y / b);
-    public double UnsquaredDistanceFrom(Vector2D other) => (X - other.X) * (X - other.X) + (Y - other.Y) * (Y - other.Y);
+    public double UnsquareRootedDistanceFrom(Vector2D other) => (X - other.X) * (X - other.X) + (Y - other.Y) * (Y - other.Y);
     public Vector2D Normalize()
     {
         var distance = Math.Sqrt(X * X + Y * Y);

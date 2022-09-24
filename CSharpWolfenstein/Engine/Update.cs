@@ -207,10 +207,11 @@ namespace CSharpWolfenstein.Engine
             args.input with
             {
                 GameObjects = args.input.GameObjects.OrderByDescending(go =>
-                    (go.CommonProperties.Position - args.input.Camera.Position).Magnitude()
+                    // We can avoid taking a square root for the actual distance (its a Pythagoras calculation)
+                    // as we don't need the actual distance to do the sort, just the relative distance
+                    go.CommonProperties.Position.UnsquareRootedDistanceFrom(args.input.Camera.Position)
                 ).ToImmutableArray()
             };
-
 
         public static GameState Update(this GameState game, double delta, WallRenderingResult wallRenderingResult)
         {

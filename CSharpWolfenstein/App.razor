@@ -98,6 +98,8 @@
     {
         if (_gameEngine == null) return;
         // the monitor prevents colliding frames in the event (pun intended) of a lengthy frame render time
+        // this seemed to be happening when using the step ray caster and this did resolve it but its one of those
+        // "strokes chin I'm not convinced" things.
         if (Monitor.TryEnter(_monitor))
         {
             _gameEngine.NewFrame(e);

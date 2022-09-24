@@ -91,32 +91,19 @@ public static class ObjectRenderer
         var transformY = invDet * (-planeY * spriteX + planeX * spriteY);
         var spriteScreenX = viewportSize.width / 2.0 * (1.0 + transformX / transformY);
         //using 'transformY' instead of the real distance prevents fisheye - must have been one of my many mistakes back in 92!
-        var spriteHeight = (int) Math.Abs(viewportSize.height / transformY);
-        var drawStartY = Math.Max(0, -spriteHeight / 2 + viewportSize.height / 2);
-        var drawEndY = Math.Min(viewportSize.height - 1, spriteHeight / 2 + viewportSize.height / 2);
         var spriteWidth = (int) Math.Abs(viewportSize.height / transformY);
         var drawStartX = (int)Math.Max(0, (-spriteWidth / 2) + spriteScreenX);
         var drawEndX = (int)Math.Min(viewportSize.width - 1, spriteWidth / 2 + spriteScreenX);
         
-        
-        var lineHeight = viewportSize.height / transformY;
-        var step = 1.0 * Constants.TextureHeight / lineHeight;
-        if (drawStartX >= 0 && drawEndX < viewportSize.width)
+        if (drawStartX >= 0 && drawEndX < viewportSize.width && drawStartX < drawEndX)
         {
             var spriteIndex = GetOrientedSpritedIndex(game, gameObject);
-            Texture? trySpriteTexture = null;
-            try
-            {
-                trySpriteTexture = assetPack.Sprites[spriteIndex];
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
-            }
-
-            var spriteTexture = trySpriteTexture!;
-            //var spriteTexture = assetPack.Sprites[spriteIndex];
+            var spriteTexture = assetPack.Sprites[spriteIndex];
+            var spriteHeight = (int) Math.Abs(viewportSize.height / transformY);
+            var drawStartY = Math.Max(0, -spriteHeight / 2 + viewportSize.height / 2);
+            var drawEndY = Math.Min(viewportSize.height - 1, spriteHeight / 2 + viewportSize.height / 2);
+            var lineHeight = viewportSize.height / transformY;
+            var step = 1.0 * Constants.TextureHeight / lineHeight;
 
             fixed (uint* destPtr = buffer)
             {
